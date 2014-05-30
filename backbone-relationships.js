@@ -79,6 +79,12 @@
         references: {},
         embeddings: {},
 
+        // Property to control whether an embedding should be inlined in this model's JSON representation.
+        // Useful when the embedding shall be saved to the server together with its parent.
+        // If a key of an embedding is added as a string to this array, the result of #toJSON() will have
+        // a property of that key, under which the embedded object's JSON representation is nested.
+        inlineJSON: [],
+
         constructor: function(attributes, options) {
             var attrs = attributes || {};
 
@@ -116,7 +122,6 @@
             var base =
                 _.result(this, 'urlRoot') ||
                 _.result(this.collection, 'url');
-
             if(base) {
                 if(this.isNew()) return base;
                 return base.replace(/([^\/])$/, '$1/') + encodeURIComponent(this.id);
@@ -124,7 +129,7 @@
                 base = _.result(this.parent, 'url');
                 suffix = _.result(this, 'urlSuffix');
                 if(base && suffix) {
-                    return base.replace(/([^\/])$/, '$1/') + suffix;
+                    return base.replace(/([^\/])$/, '$1/') + suffix.replace(/(\/?)(.*)/, '$2');
                 }
             }
 
@@ -289,7 +294,7 @@
 
         _setEmbedding: function(key, value, options, changes) {
 
-            var RelClass = resolveRelClass(this.references[key]);
+            var RelClass = resolveRelClass(this.embeddings[key]);
             var current = this.relatedObjects[key];
 
             if(value && value != current) {
@@ -300,7 +305,7 @@
                     this.relatedObjects[key] = value;
                     this.relatedObjects[key].setParent(this, key);
                 } else if(!this.relatedObjects[key] ||
-                        (this.relatedObjects[key].get(this.relatedObjects[key].idAttribute) && this.relatedObjects[key].id !== value[this.relatedObjects[key].idAttribute])) {
+                        (!this.relatedObjects[key].isNew() && this.relatedObjects[key].id !== value[this.relatedObjects[key].idAttribute])) {
                     // first assignment of an embedded model or assignment of an embedded model with a different ID
                     // create embedded model and set its parent
                     this.relatedObjects[key] = new RelClass(value, options);
@@ -324,6 +329,7 @@
                 changes.push(key);
 
                 // stop propagating 'deepchange' of current embedded object
+                // TODO: also unset its parent property (to prevent accidental PUTs of old data)
                 if(current) {
                     this.stopListening(current, 'deepchange', this._propagateDeepChange);
                 }
@@ -450,6 +456,7 @@
                     // auto-fetch related model if its url can be built
                     var url;
                     try { url = _.result(relatedObject, "url"); } catch(e) {}
+                    console.log(url);
                     if(url && !relatedObject.isSynced && !relatedObject.isSyncing && !_.contains(this._relatedObjectsToFetch, relatedObject)) {
                         this._relatedObjectsToFetch.push(relatedObject);
                     }
@@ -561,6 +568,17 @@
             if(this.parent.get(this.keyInParent) !== this) {
                 this.parent.set(this.keyInParent, this);
             }
+        },
+
+        toJSON: function() {
+            var json = Backbone.Model.prototype.toJSON.apply(this, arguments);
+            _.each(this.inlineJSON, function(key) {
+                var obj = this.get("key");
+                if(obj && _.isFunction(obj.toJSON)) {
+                    json[key] = obj.toJSON();
+                }
+            });
+            return json;
         },
 
         sync: function(method, obj, options) {

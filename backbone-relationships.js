@@ -1,6 +1,6 @@
 (function(root, factory) {
     // Set up Backbone appropriately for the environment. Start with AMD.
-    if (typeof define === 'function' && define.amd) {
+    if(typeof define === 'function' && define.amd) {
         define(['underscore', 'backbone', 'exports'], function(_, Backbone, exports) {
             // Export global even in AMD case in case this script is loaded with
             // others that may still expect a global Backbone.
@@ -8,7 +8,7 @@
         });
 
     // Next for Node.js or CommonJS.
-    } else if (typeof exports !== 'undefined') {
+    } else if(typeof exports !== 'undefined') {
         var _ = require('underscore'),
             Backbone = require('backbone');
 
@@ -56,6 +56,22 @@
         }
     }
 
+    // Wraps the xhr success and error callbacks to hook in additional method invocation
+    function wrapOptionsCallbacks(method, options) {
+        options = options || {};
+        var success = options.success;
+        var error = options.error;
+        options.success = function(resp) {
+            method(options);
+            if(success) success(resp);
+        };
+        options.error = function(resp) {
+            method(options);
+            if(error) error(resp);
+        };
+        return options;
+    }
+
 
     var modelOptions = ['url', 'urlRoot', 'collection'];
 
@@ -77,14 +93,14 @@
             // handle default values for relations
             var defaults,
                 references = this.references;
-            if (options.parse) attrs = this.parse(attrs, options) || {};
+            if(options.parse) attrs = this.parse(attrs, options) || {};
 
-            if (defaults = _.result(this, 'defaults')) {
+            if(defaults = _.result(this, 'defaults')) {
                 defaults = _.extend({}, defaults); // clone
                 _.each(_.keys(references), function(refKey) {
                     // do not set default value for referenced object attribute
                     // if attrs contain a corresponding ID reference
-                    if (refKeyToIdRefKey(references, refKey) in attrs && refKey in defaults) {
+                    if(refKeyToIdRefKey(references, refKey) in attrs && refKey in defaults) {
                         delete defaults[refKey];
                     }
                 });
@@ -94,6 +110,31 @@
             this.changed = {};
 
             this.initialize.apply(this, arguments);
+        },
+
+        url: function() {
+            var base =
+                _.result(this, 'urlRoot') ||
+                _.result(this.collection, 'url');
+
+            if(base) {
+                if(this.isNew()) return base;
+                return base.replace(/([^\/])$/, '$1/') + encodeURIComponent(this.id);
+            } else if(this.parent && !this.parent.isNew()) {
+                base = _.result(this.parent, 'url');
+                suffix = _.result(this, 'urlSuffix');
+                if(base && suffix) {
+                    return base.replace(/([^\/])$/, '$1/') + suffix;
+                }
+            }
+
+            throw new Error('Could not build url for the model');
+        },
+
+        urlSuffix: function() {
+            return this.parent && _.findKey(this.parent, function(relObj) {
+                return relObj === self;
+            });
         },
 
         get: function(attr) {
@@ -111,10 +152,10 @@
         // anyone who needs to know about the change in state. The heart of the beast.
         set: function(key, val, options) {
             var attr, attrs, unset, changes, silent, changing, prev, current, referenceKey;
-            if (key === null) return this;
+            if(key === null) return this;
 
             // Handle both `"key", value` and `{key: value}` -style arguments.
-            if (typeof key === 'object') {
+            if(typeof key === 'object') {
                 attrs = key;
                 options = val;
             } else {
@@ -132,7 +173,7 @@
             this._deepChangePropagatedFor = [];
 
             // Run validation.
-            if (!this._validate(attrs, options)) return false;
+            if(!this._validate(attrs, options)) return false;
 
             // Extract attributes and options.
             unset           = options.unset;
@@ -141,7 +182,7 @@
             changing        = this._changing;
             this._changing  = true;
 
-            if (!changing) {
+            if(!changing) {
                 this._previousAttributes = _.clone(this.attributes);
                 this._previousRelatedObjects = _.clone(this.relatedObjects);
                 this.changed = {};
@@ -149,7 +190,7 @@
             current = this.attributes, prev = this._previousAttributes;
 
             // Check for changes of `id`.
-            if (this.idAttribute in attrs) this.id = attrs[this.idAttribute];
+            if(this.idAttribute in attrs) this.id = attrs[this.idAttribute];
 
             // Here's some potential do some optimization if performance should become a concern:
             // precalculate the idRefKeys for all references and do a simple lookup
@@ -183,8 +224,8 @@
                 } else {
 
                     // default Backbone behavior for plain attribute set
-                    if (!_.isEqual(current[attr], val)) changes.push(attr);
-                    if (!_.isEqual(prev[attr], val)) {
+                    if(!_.isEqual(current[attr], val)) changes.push(attr);
+                    if(!_.isEqual(prev[attr], val)) {
                         this.changed[attr] = val;
                     } else {
                         delete this.changed[attr];
@@ -197,8 +238,8 @@
             var currentAll = _.extend({}, current, this.relatedObjects);
 
             // Trigger all relevant attribute changes.
-            if (!silent) {
-                if (changes.length) this._pending = true;
+            if(!silent) {
+                if(changes.length) this._pending = true;
                 for (var i = 0, l = changes.length; i < l; i++) {
                     this.trigger('change:' + changes[i], this, currentAll[changes[i]], options);
 
@@ -207,8 +248,8 @@
 
             // You might be wondering why there's a `while` loop here. Changes can
             // be recursively nested within `"change"` events.
-            if (changing) return this;
-            if (!silent) {
+            if(changing) return this;
+            if(!silent) {
                 while (this._pending) {
                     this._pending = false;
                     this.trigger('change', this, options);
@@ -251,9 +292,9 @@
             var RelClass = resolveRelClass(this.references[key]);
             var current = this.relatedObjects[key];
 
-            if (value && value != current) {
+            if(value && value != current) {
 
-                if (value instanceof Backbone.RelCollection || value instanceof Backbone.RelModel) {
+                if(value instanceof Backbone.RelCollection || value instanceof Backbone.RelModel) {
                     // a model object is directly assigned
                     // set its parent
                     this.relatedObjects[key] = value;
@@ -275,24 +316,24 @@
                 this.relatedObjects[key] = value;
             }
 
-            if (options.unset) {
+            if(options.unset) {
                 delete this.relatedObjects[key];
             }
 
-            if (current != this.relatedObjects[key]) {
+            if(current != this.relatedObjects[key]) {
                 changes.push(key);
 
                 // stop propagating 'deepchange' of current embedded object
-                if (current) {
+                if(current) {
                     this.stopListening(current, 'deepchange', this._propagateDeepChange);
                 }
 
                 // start propagating 'deepchange' of new embedded object
-                if (this.relatedObjects[key]) {
+                if(this.relatedObjects[key]) {
                     this.listenTo(this.relatedObjects[key], 'deepchange', this._propagateDeepChange);
                 }
             }
-            if (this._previousRelatedObjects[key] != this.relatedObjects[key]) {
+            if(this._previousRelatedObjects[key] != this.relatedObjects[key]) {
                 this.changed[key] = this.relatedObjects[key];
             } else {
                 delete this.changed[key];
@@ -306,7 +347,7 @@
             var current = this.relatedObjects[key],
                 currentId = this.attributes[idRef];
 
-            if (value) {
+            if(value) {
                 if(RelClass.prototype._representsToOne) {
                     // handling to-one relation
                     this._setToOneReference(key, RelClass, value, options);
@@ -324,16 +365,16 @@
                 this.attributes[idRef] = value;
             }
 
-            if (options.unset) {
+            if(options.unset) {
                 delete this.relatedObjects[key];
                 delete this.attributes[idRef];
             }
 
 
-            if (!_.isEqual(currentId, this.attributes[idRef])) {
+            if(!_.isEqual(currentId, this.attributes[idRef])) {
                 changes.push(idRef);
             }
-            if (current != this.relatedObjects[key]) {
+            if(current != this.relatedObjects[key]) {
                 changes.push(key);
 
                 // stop propagating 'deepchange' of current related object
@@ -353,12 +394,12 @@
                 }
             }
 
-            if (this._previousRelatedObjects[key] != this.relatedObjects[key]) {
+            if(this._previousRelatedObjects[key] != this.relatedObjects[key]) {
                 this.changed[key] = this.relatedObjects[key];
             } else {
                 delete this.changed[key];
             }
-            if (!_.isEqual(this._previousAttributes[idRef], this.attributes[idRef])) {
+            if(!_.isEqual(this._previousAttributes[idRef], this.attributes[idRef])) {
                 this.changed[idRef] = this.attributes[idRef];
             } else {
                 delete this.changed[idRef];
@@ -372,11 +413,11 @@
             var id = value[RelClass.prototype.idAttribute||"id"] || value;
 
             // reset relatedObject if the ID reference changed
-            if (relatedObject && relatedObject.id != id) {
+            if(relatedObject && relatedObject.id != id) {
                 relatedObject = undefined;
             }
 
-            if (value instanceof Backbone.RelModel) {
+            if(value instanceof Backbone.RelModel) {
                 // directly assign a model
                 if(value===relatedObject) return;
                 relatedObject = value;
@@ -384,10 +425,10 @@
                 return;
             }
 
-            if (value instanceof Object) {
+            if(value instanceof Object) {
                 // if the related model data is side-loaded,
                 // create/update the related model instance
-                if (relatedObject) {
+                if(relatedObject) {
                     relatedObject.set(value, options);
                 } else {
                     relatedObject = new RelClass(value, options);
@@ -396,18 +437,20 @@
                 relatedObject.isSynced = true;
 
                 // remove side-loaded object from the models to fetch
-                if (relatedObject != this)
+                if(relatedObject != this)
                     this._relatedObjectsToFetch = _.without(this._relatedObjectsToFetch, relatedObject);
             } else {
                 // if only an ID reference is provided,
                 // instantiate the model
-                if (!relatedObject) {
+                if(!relatedObject) {
                     var attrs = {};
                     attrs[RelClass.prototype.idAttribute||"id"] = id;
                     relatedObject = new RelClass(attrs, options);
 
-                    // fetch related model's data if not lazy
-                    if (!relatedObject.isSynced && !relatedObject.isSyncing && !lazy && !_.contains(this._relatedObjectsToFetch, relatedObject)) {
+                    // auto-fetch related model if its url can be built
+                    var url;
+                    try { url = _.result(relatedObject, "url"); } catch(e) {}
+                    if(url && !relatedObject.isSynced && !relatedObject.isSyncing && !_.contains(this._relatedObjectsToFetch, relatedObject)) {
                         this._relatedObjectsToFetch.push(relatedObject);
                     }
                 }
@@ -422,7 +465,7 @@
 
             var relatedObject = this.relatedObjects[key];
 
-            if (value instanceof Backbone.RelCollection) {
+            if(value instanceof Backbone.RelCollection) {
                 // a collection model is directly assigned
 
                 if(value===relatedObject) return;
@@ -440,11 +483,11 @@
             }
 
             // expect an array of IDs or model json objects
-            if (!_.isArray(value)) {
+            if(!_.isArray(value)) {
                 throw new Error("Got an unexpected value to set reference '" + key + "'");
             }
 
-            if (!relatedObject) {
+            if(!relatedObject) {
                 relatedObject = new RelClass([], {parent: this});
             }
 
@@ -456,14 +499,14 @@
                 // try to get the related model from the current relatedObject collection
                 var item = relatedObject.get(id);
 
-                if (itemData instanceof Backbone.Model) {
+                if(itemData instanceof Backbone.Model) {
                     return itemData;
                 }
 
-                if (itemData instanceof Object) {
+                if(itemData instanceof Object) {
                     // if the related model data is sideloaded,
                     // create/update the related model instance
-                    if (item) {
+                    if(item) {
                         item.set(itemData, options);
                     } else {
                         item = new ItemModel(itemData);
@@ -472,20 +515,22 @@
                     item.isSynced = true;
 
                     // remove side-loaded object from the models to fetch
-                    if (item != this) {
+                    if(item != this) {
                         this._relatedObjectsToFetch = _.without(this._relatedObjectsToFetch, item);
                     }
                 } else {
                     // if only an ID reference is provided
                     // and the relation could not be resolved to an already loaded model,
                     // instantiate the model
-                    if (!item) {
+                    if(!item) {
                         var attrs = {};
                         attrs[ItemModel.prototype.idAttribute||"id"] = id;
                         item = new ItemModel(attrs, options);
 
-                        // fetch related model's data if not lazy
-                        if (!item.isSynced && !item.isSyncing && !lazy && !_.contains(this._relatedObjectsToFetch, item)) {
+                        // auto-fetch related model if its url can be built
+                        var url;
+                        try { url = _.result(item, "url"); } catch(e) {}
+                        if(url && !item.isSynced && !item.isSyncing && !_.contains(this._relatedObjectsToFetch, item)) {
                             this._relatedObjectsToFetch.push(item);
                         }
                     }
@@ -501,12 +546,180 @@
             this.relatedObjects[key] = relatedObject;
         },
 
+        // Sets the parent for an embedded object
+        // If the optional keyInParent parameter is omitted, is is automatically detected
+        setParent: function(parent, keyInParent) {
+            var self = this;
+            this.keyInParent = keyInParent || _.findKey(parent, function(relObj) {
+                return relObj === self;
+            });
+            if(!this.keyInParent) {
+                throw new Error("A key for the embedding in the parent must be specified as it could not be detected automatically.");
+            }
+
+            this.parent = parent;
+            if(this.parent.get(this.keyInParent) !== this) {
+                this.parent.set(this.keyInParent, this);
+            }
+        },
+
+        sync: function(method, obj, options) {
+            this._beforeSync();
+            options = wrapOptionsCallbacks(this._afterSyncBeforeSet.bind(this), options);
+            return Backbone.Model.prototype.sync.apply(this, arguments);
+        },
+
+        _beforeSync: function() {
+            this.isSyncing = true;
+
+            // make sure that "deepsync" is always triggered after "sync"
+            this._relatedObjectsToFetch.push(this);
+            var self = this;
+            var syncCb = function() {
+                self._relatedObjectFetchSuccessHandler(self);
+                self.off("error", errorCb);
+            };
+            var errorCb = function() {
+                self._relatedObjectsToFetch.splice(self._relatedObjectsToFetch.indexOf(self), 1);
+                self.off("sync", syncCb);
+            };
+            this.once("sync", syncCb);
+            this.once("error", errorCb);
+        },
+
+        _afterSyncBeforeSet: function() {
+            this.isSynced = true;
+            delete this.isSyncing;
+        },
+
+        _propagateDeepChange: function(changedModelOrCollection, opts) {
+            // make sure that 'deepchange' is only triggered once, also when set operations are nested
+            if(_.contains(this._deepChangePropagatedFor, opts.setOriginId)) {
+                return;
+            }
+            this._deepChangePropagatedFor.push(opts.setOriginId);
+            this.trigger('deepchange', changedModelOrCollection, opts);
+        },
+
+        // This callback ensures that relations are unset, when a related object is destroyed
+        _relatedObjectDestroyHandler: function(destroyedObject) {
+            _.each(this.relatedObjects, function(relObj, key) {
+                if(relObj == destroyedObject) {
+                    this.unset(key);
+                }
+            }, this);
+        },
+
+        // This callback is executed after every successful fetch of related objects after
+        // these have been set as a reference or embedding. It is responsible for eventually
+        // triggering the 'deepsync' event.
+        _relatedObjectFetchSuccessHandler: function(obj) {
+            this._relatedObjectsToFetch.splice(this._relatedObjectsToFetch.indexOf(obj), 1);
+            if(this._relatedObjectsToFetch.length === 0) {
+                this.trigger("deepsync", this);
+            }
+        },
+
+        // propagate errors when automatically fetching related models
+        _relatedObjectFetchErrorHandler: function(obj, resp, options) {
+            this._relatedObjectsToFetch.splice(this._relatedObjectsToFetch.indexOf(obj), 1);
+            this.trigger('error', obj, resp, options);
+        },
 
         _representsToOne: true
 
     });
 
     Backbone.RelCollection = Backbone.Collection.extend({
+
+        constructor: function() {
+
+            var triggerOriginalDeepChange = function(options) {
+                // Trigger original 'deepchange' event, which will be propagated through the related object graph
+                var originId = options.setOriginId || _.uniqueId();
+                this._deepChangePropagatedFor.push(originId);
+                this.trigger('deepchange', this, _.extend({ setOriginId: originId }, options));
+            }.bind(this);
+
+            this.on('add remove', function(model, collection, options) {
+                triggerOriginalDeepChange(options);
+            });
+            this.on('reset', function(collection, options) {
+                triggerOriginalDeepChange(options);
+            });
+            //this.on('sort', function(collection, options) {
+            //    triggerOriginalDeepChange(options);
+            //});
+
+            return Backbone.Collection.prototype.constructor.apply(this, arguments);
+        },
+
+        url: function() {
+            var base = _.result(this, 'urlRoot');
+            if(base) {
+                return base;
+            } else if(this.parent && !this.parent.isNew()) {
+                base = _.result(this.parent, 'url');
+                suffix = _.result(this, 'urlSuffix');
+                if(base && suffix) {
+                    return base.replace(/([^\/])$/, '$1/') + suffix;
+                }
+            }
+
+            throw new Error('Could not build url for the collection');
+        },
+
+        set: function() {
+            this._deepChangePropagatedFor = [];
+            return Backbone.Collection.prototype.set.apply(this, arguments);
+        },
+
+        // Sets the parent for an embedded collection
+        // If the optional keyInParent parameter is omitted, is is automatically detected
+        setParent: function(parent, keyInParent) {
+            var self = this;
+            this.keyInParent = keyInParent || _.findKey(parent, function(relObj) {
+                return relObj === self;
+            });
+            if(!this.keyInParent) {
+                throw new Error("A key for the embedding in the parent must be specified as it could not be detected automatically.");
+            }
+
+            this.parent = parent;
+            if(this.parent.get(this.keyInParent) !== this) {
+                this.parent.set(this.keyInParent, this);
+            }
+        },
+
+        sync: function() {
+            this._beforeSync();
+            //options = wrapOptionsCallbacks(this._afterSetBeforeTrigger, options);
+            return Backbone.Collection.prototype.sync.apply(this, arguments);
+        },
+
+        fetch: function(options) {
+            options = wrapOptionsCallbacks(this._afterSetBeforeTrigger.bind(this), options);
+            return Backbone.Collection.prototype.fetch.apply(this, [options]);
+        },
+
+        _beforeSync: function() {
+            this.isSyncing = true;
+        },
+
+        _prepareModel: function(attrs, options) {
+            // set isSynced flag on each item model
+            // before the the "add" event is triggered
+            var model = Backbone.Collection.prototype._prepareModel.apply(this, arguments);
+            if(model && this.isSyncing) {
+                model.isSynced = true;
+            }
+            return model;
+        },
+
+        _afterSetBeforeTrigger: function() {
+            this.isSynced = true;
+            delete this.isSyncing;
+        },
 
         _representsToMany: true
 

@@ -79,11 +79,18 @@
         references: {},
         embeddings: {},
 
-        // Property to control whether an embedding should be inlined in this model's JSON representation.
+        // Property to control whether an embedding shall be inlined in this model's JSON representation.
         // Useful when the embedding shall be saved to the server together with its parent.
         // If a key of an embedding is added as a string to this array, the result of #toJSON() will have
         // a property of that key, under which the embedded object's JSON representation is nested.
         inlineJSON: [],
+
+        // Property to control whether referenced objects shall be fetched automcatically when set.
+        // - `true` (default) will cause all referenced objects to be fetched automatically
+        // - `false` will cause that referenced objects are never fetched automatically
+        // - Setting an array of reference key strings, allows to explicitly specify which references
+        // shall be auto-fetched.
+        autoFetchReferences: true,
 
         constructor: function(attributes, options) {
             var attrs = attributes || {};
@@ -305,9 +312,9 @@
                     // set its parent
                     this.relatedObjects[key] = value;
                     this.relatedObjects[key].setParent(this, key);
-                } else if(!this.relatedObjects[key] ||
-                        (!this.relatedObjects[key].isNew() && this.relatedObjects[key].id !== value[this.relatedObjects[key].idAttribute])) {
-                    // first assignment of an embedded model or assignment of an embedded model with a different ID
+                } else if(!this.relatedObjects[key]) {
+                      // || (!_.isArray(value) && !this.relatedObjects[key].isNew() && this.relatedObjects[key].id !== value[this.relatedObjects[key].idAttribute])) {
+                    // first assignment of an embedded model        //or assignment of an embedded model with a different ID
                     // create embedded model and set its parent
                     this.relatedObjects[key] = new RelClass(value, options);
                     this.relatedObjects[key].setParent(this, key);
@@ -435,9 +442,11 @@
                     relatedObject = new RelClass(attrs, options);
 
                     // auto-fetch related model if its url can be built
+                    var autoFetch = this.autoFetchReferences === true ||
+                        (_.isArray(this.autoFetchReferences) && _.contains(this.autoFetchReferences, key));
                     var url;
                     try { url = _.result(relatedObject, "url"); } catch(e) {}
-                    if(url && !relatedObject.isSynced && !relatedObject.isSyncing && !_.contains(this._relatedObjectsToFetch, relatedObject)) {
+                    if(autoFetch && url && !relatedObject.isSynced && !relatedObject.isSyncing && !_.contains(this._relatedObjectsToFetch, relatedObject)) {
                         this._relatedObjectsToFetch.push(relatedObject);
                     }
                 }
@@ -515,9 +524,11 @@
                         item = new ItemModel(attrs, options);
 
                         // auto-fetch related model if its url can be built
+                        var autoFetch = this.autoFetchReferences === true ||
+                            (_.isArray(this.autoFetchReferences) && _.contains(this.autoFetchReferences, key));
                         var url;
                         try { url = _.result(item, "url"); } catch(e) {}
-                        if(url && !item.isSynced && !item.isSyncing && !_.contains(this._relatedObjectsToFetch, item)) {
+                        if(autoFetch && url && !item.isSynced && !item.isSyncing && !_.contains(this._relatedObjectsToFetch, item)) {
                             this._relatedObjectsToFetch.push(item);
                         }
                     }
@@ -679,7 +690,7 @@
                 base = _.result(this.parent, 'url');
                 suffix = _.result(this, 'urlSuffix');
                 if(base && suffix) {
-                    return base.replace(/([^\/])$/, '$1/') + suffix;
+                    return base.replace(/([^\/])$/, '$1/') + suffix.replace(/(\/?)(.*)/, '$2');
                 }
             }
 

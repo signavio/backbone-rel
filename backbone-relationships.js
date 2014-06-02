@@ -137,8 +137,10 @@
         },
 
         urlSuffix: function() {
-            return this.parent && _.findKey(this.parent, function(relObj) {
-                return relObj === self;
+            var self = this,
+                parent = this.parent;
+            return parent && _.find(_.keys(parent.embeddings), function(key) {
+                return parent.get(key) === self;
             });
         },
 
@@ -202,12 +204,11 @@
             var findReferenceKey = function(key) {
                 var references = this.references;
                 if(references[key]) return key;
-                _.each(_.keys(references), function(refKey) {
-                    if(refKeyToIdRefKey(references, refKey) == key) {
-                        return refKey;
-                    }
+                return _.find(_.keys(references), function(refKey) {
+                    return refKeyToIdRefKey(references, refKey) == key;
                 });
             }.bind(this);
+
 
             // For each `set` attribute, update or delete the current value.
             for (attr in attrs) {
@@ -224,7 +225,7 @@
                         // is ID ref, but also side-loaded data is present in attrs
                         continue; // ignore attr
                     }
-                    this._setReference(attr, val, nestedOptions, changes);
+                    this._setReference(referenceKey, val, nestedOptions, changes);
 
                 } else {
 
@@ -317,7 +318,7 @@
 
             } else {
 
-                // set undefined or null
+                // set new embedded object or null/undefined
                 this.relatedObjects[key] = value;
             }
 
@@ -328,15 +329,11 @@
             if(current != this.relatedObjects[key]) {
                 changes.push(key);
 
-                // stop propagating 'deepchange' of current embedded object
-                // TODO: also unset its parent property (to prevent accidental PUTs of old data)
-                if(current) {
-                    this.stopListening(current, 'deepchange', this._propagateDeepChange);
-                }
+                this._listenToRelatedObject(key, current);
 
-                // start propagating 'deepchange' of new embedded object
-                if(this.relatedObjects[key]) {
-                    this.listenTo(this.relatedObjects[key], 'deepchange', this._propagateDeepChange);
+                // unset current's parent property
+                if(current) {
+                    current.parent = null;
                 }
             }
             if(this._previousRelatedObjects[key] != this.relatedObjects[key]) {
@@ -347,7 +344,6 @@
         },
 
         _setReference: function(key, value, options, changes) {
-
             var RelClass = resolveRelClass(this.references[key]),
                 idRef = refKeyToIdRefKey(this.references, key);
             var current = this.relatedObjects[key],
@@ -382,22 +378,7 @@
             }
             if(current != this.relatedObjects[key]) {
                 changes.push(key);
-
-                // stop propagating 'deepchange' of current related object
-                if(current) {
-                    this.stopListening(current, 'deepchange', this._propagateDeepChange);
-                    if(current._representsToOne) {
-                        this.stopListening(current, 'destroy', this._relatedObjectDestroyHandler);
-                    }
-                }
-
-                // start propagating 'deepchange' of new related object
-                if(this.relatedObjects[key]) {
-                    this.listenTo(this.relatedObjects[key], 'deepchange', this._propagateDeepChange);
-                    if(this.relatedObjects[key]._representsToOne) {
-                        this.listenTo(this.relatedObjects[key], 'destroy', this._relatedObjectDestroyHandler);
-                    }
-                }
+                this._listenToRelatedObject(key, current);
             }
 
             if(this._previousRelatedObjects[key] != this.relatedObjects[key]) {
@@ -456,7 +437,6 @@
                     // auto-fetch related model if its url can be built
                     var url;
                     try { url = _.result(relatedObject, "url"); } catch(e) {}
-                    console.log(url);
                     if(url && !relatedObject.isSynced && !relatedObject.isSyncing && !_.contains(this._relatedObjectsToFetch, relatedObject)) {
                         this._relatedObjectsToFetch.push(relatedObject);
                     }
@@ -553,12 +533,30 @@
             this.relatedObjects[key] = relatedObject;
         },
 
+        _listenToRelatedObject: function(key, current) {
+            // stop propagating 'deepchange' of current related object
+            if(current) {
+                this.stopListening(current, 'deepchange', this._propagateDeepChange);
+                if(current._representsToOne) {
+                    this.stopListening(current, 'destroy', this._relatedObjectDestroyHandler);
+                }
+            }
+
+            // start propagating 'deepchange' of new related object
+            if(this.relatedObjects[key]) {
+                this.listenTo(this.relatedObjects[key], 'deepchange', this._propagateDeepChange);
+                if(this.relatedObjects[key]._representsToOne) {
+                    this.listenTo(this.relatedObjects[key], 'destroy', this._relatedObjectDestroyHandler);
+                }
+            }
+        },
+
         // Sets the parent for an embedded object
         // If the optional keyInParent parameter is omitted, is is automatically detected
         setParent: function(parent, keyInParent) {
             var self = this;
-            this.keyInParent = keyInParent || _.findKey(parent, function(relObj) {
-                return relObj === self;
+            this.keyInParent = keyInParent || _.find(_.keys(parent.embeddings), function(key) {
+                return parent.get(key) == self;
             });
             if(!this.keyInParent) {
                 throw new Error("A key for the embedding in the parent must be specified as it could not be detected automatically.");
@@ -571,9 +569,10 @@
         },
 
         toJSON: function() {
+            var self = this;
             var json = Backbone.Model.prototype.toJSON.apply(this, arguments);
             _.each(this.inlineJSON, function(key) {
-                var obj = this.get("key");
+                var obj = self.get(key);
                 if(obj && _.isFunction(obj.toJSON)) {
                     json[key] = obj.toJSON();
                 }
@@ -687,6 +686,14 @@
             throw new Error('Could not build url for the collection');
         },
 
+        urlSuffix: function() {
+            var self = this,
+                parent = this.parent;
+            return parent && _.find(_.keys(parent.embeddings), function(key) {
+                return parent.get(key) === self;
+            });
+        },
+
         set: function() {
             this._deepChangePropagatedFor = [];
             return Backbone.Collection.prototype.set.apply(this, arguments);
@@ -696,8 +703,8 @@
         // If the optional keyInParent parameter is omitted, is is automatically detected
         setParent: function(parent, keyInParent) {
             var self = this;
-            this.keyInParent = keyInParent || _.findKey(parent, function(relObj) {
-                return relObj === self;
+            this.keyInParent = keyInParent || _.find(_.keys(parent.embeddings), function(key) {
+                return parent.get(key) == self;
             });
             if(!this.keyInParent) {
                 throw new Error("A key for the embedding in the parent must be specified as it could not be detected automatically.");

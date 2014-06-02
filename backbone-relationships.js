@@ -132,7 +132,7 @@
             if(base) {
                 if(this.isNew()) return base;
                 return base.replace(/([^\/])$/, '$1/') + encodeURIComponent(this.id);
-            } else if(this.parent && !this.parent.isNew()) {
+            } else if(this.parent) {
                 base = _.result(this.parent, 'url');
                 suffix = _.result(this, 'urlSuffix');
                 if(base && suffix) {
@@ -686,7 +686,7 @@
             var base = _.result(this, 'urlRoot');
             if(base) {
                 return base;
-            } else if(this.parent && !this.parent.isNew()) {
+            } else if(this.parent) {
                 base = _.result(this.parent, 'url');
                 suffix = _.result(this, 'urlSuffix');
                 if(base && suffix) {

@@ -90,7 +90,7 @@
         // - `false` will cause that referenced objects are never fetched automatically
         // - Setting an array of reference key strings, allows to explicitly specify which references
         // shall be auto-fetched.
-        autoFetchReferences: true,
+        autoFetchRelated: true,
 
         constructor: function(attributes, options) {
             var attrs = attributes || {};
@@ -278,24 +278,7 @@
             }
 
             // finally, fetch all related objects that need a fetch
-            for (var j=0; j<this._relatedObjectsToFetch.length; j++) {
-                var model = this._relatedObjectsToFetch[j];
-                if(model==this) continue; // do not fetch again while setting
-
-                 // test again whether fetching has already been triggered by another relation
-                if(model.isSyncing) {
-                    model.once("sync", this._relatedObjectFetchSuccessHandler.bind(this, model));
-                    continue;
-                } else if(model.isSynced) {
-                    this._relatedObjectFetchSuccessHandler(model);
-                    continue;
-                }
-
-                model.fetch({
-                    success: this._relatedObjectFetchSuccessHandler.bind(this),
-                    error: this._relatedObjectFetchErrorHandler.bind(this)
-                });
-            }
+            this._fetchRelatedObjects();
 
             return this;
         },
@@ -442,8 +425,8 @@
                     relatedObject = new RelClass(attrs, options);
 
                     // auto-fetch related model if its url can be built
-                    var autoFetch = this.autoFetchReferences === true ||
-                        (_.isArray(this.autoFetchReferences) && _.contains(this.autoFetchReferences, key));
+                    var autoFetch = this.autoFetchRelated === true ||
+                        (_.isArray(this.autoFetchRelated) && _.contains(this.autoFetchRelated, key));
                     var url;
                     try { url = _.result(relatedObject, "url"); } catch(e) {}
                     if(autoFetch && url && !relatedObject.isSynced && !relatedObject.isSyncing && !_.contains(this._relatedObjectsToFetch, relatedObject)) {
@@ -524,8 +507,8 @@
                         item = new ItemModel(attrs, options);
 
                         // auto-fetch related model if its url can be built
-                        var autoFetch = this.autoFetchReferences === true ||
-                            (_.isArray(this.autoFetchReferences) && _.contains(this.autoFetchReferences, key));
+                        var autoFetch = this.autoFetchRelated === true ||
+                            (_.isArray(this.autoFetchRelated) && _.contains(this.autoFetchRelated, key));
                         var url;
                         try { url = _.result(item, "url"); } catch(e) {}
                         if(autoFetch && url && !item.isSynced && !item.isSyncing && !_.contains(this._relatedObjectsToFetch, item)) {
@@ -591,6 +574,28 @@
             return json;
         },
 
+        fetch: function(options) {
+            var result = Backbone.Collection.prototype.fetch.apply(this, arguments);
+            var embeddingsKeys = _.keys(this.embeddings);
+            for(var i=0; i<embeddingsKeys.length; i++) {
+                var key = embeddingsKeys[i];
+                var autoFetch = this.autoFetchRelated === true ||
+                        (_.isArray(this.autoFetchRelated) && _.contains(this.autoFetchRelated, key));
+                if(autoFetch) {
+                    if(!this.get(key)) {
+                        var RelClass = resolveRelClass(this.embeddings[key]);
+                        this.set(key, new RelClass());
+                    }
+                    var relatedObject = this.get(key);
+                    if(!relatedObject.isSyncing && !_.contains(this._relatedObjectsToFetch, relatedObject)) {
+                        this._relatedObjectsToFetch.push(relatedObject);
+                    }
+                }
+            }
+            this._fetchRelatedObjects();
+            return result;
+        },
+
         sync: function(method, obj, options) {
             this._beforeSync();
             options = wrapOptionsCallbacks(this._afterSyncBeforeSet.bind(this), options);
@@ -629,18 +634,30 @@
             this.trigger('deepchange', changedModelOrCollection, opts);
         },
 
-        // This callback ensures that relations are unset, when a related object is destroyed
-        _relatedObjectDestroyHandler: function(destroyedObject) {
-            _.each(this.relatedObjects, function(relObj, key) {
-                if(relObj == destroyedObject) {
-                    this.unset(key);
+        _fetchRelatedObjects: function() {
+            for (var i=0; i<this._relatedObjectsToFetch.length; i++) {
+                var model = this._relatedObjectsToFetch[i];
+                if(model==this) continue; // do not fetch again while setting
+
+                 // test whether fetching has already been triggered by another relation
+                if(model.isSyncing) {
+                    model.once("sync", this._relatedObjectFetchSuccessHandler.bind(this, model));
+                    continue;
+                } else if(model.isSynced) {
+                    this._relatedObjectFetchSuccessHandler(model);
+                    continue;
                 }
-            }, this);
+
+                model.fetch({
+                    success: this._relatedObjectFetchSuccessHandler.bind(this),
+                    error: this._relatedObjectFetchErrorHandler.bind(this)
+                });
+            }
         },
 
         // This callback is executed after every successful fetch of related objects after
-        // these have been set as a reference or embedding. It is responsible for eventually
-        // triggering the 'deepsync' event.
+        // these have been set as a reference auto-fetched as an embedding. It is responsible
+        // for eventually triggering the 'deepsync' event.
         _relatedObjectFetchSuccessHandler: function(obj) {
             this._relatedObjectsToFetch.splice(this._relatedObjectsToFetch.indexOf(obj), 1);
             if(this._relatedObjectsToFetch.length === 0) {
@@ -652,6 +669,15 @@
         _relatedObjectFetchErrorHandler: function(obj, resp, options) {
             this._relatedObjectsToFetch.splice(this._relatedObjectsToFetch.indexOf(obj), 1);
             this.trigger('error', obj, resp, options);
+        },
+
+        // This callback ensures that relations are unset, when a related object is destroyed
+        _relatedObjectDestroyHandler: function(destroyedObject) {
+            _.each(this.relatedObjects, function(relObj, key) {
+                if(relObj == destroyedObject) {
+                    this.unset(key);
+                }
+            }, this);
         },
 
         _representsToOne: true

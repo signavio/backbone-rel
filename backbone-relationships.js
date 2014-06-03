@@ -339,20 +339,17 @@
             var current = this.relatedObjects[key],
                 currentId = this.attributes[idRef];
 
-            if(value) {
+            if(value!==undefined && value!==null) {
                 if(RelClass.prototype._representsToOne) {
                     // handling to-one relation
                     this._setToOneReference(key, RelClass, value, options);
-                    // make sure the ID ref is correctly set in the attributes
-                    this.attributes[idRef] = this.relatedObjects[key].id;
                 } else if(RelClass.prototype._representsToMany) {
                     // handling to-many relation
                     this._setToManyReference(key, RelClass, value, options);
-                    // make sure the ID ref array is correctly set in the attributes
-                    this.attributes[idRef] = this.relatedObjects[key].map(function(m) { return m.id; });
                 }
+                this._ensureIdReference(idRef, key);
             } else {
-                // set undefined or null
+                // set `undefined` or `null`
                 this.relatedObjects[key] = value;
                 this.attributes[idRef] = value;
             }
@@ -382,6 +379,47 @@
                 delete this.changed[idRef];
             }
 
+        },
+
+        _ensureIdReference: function(idRef, refKey) {
+            var relatedObject = this.relatedObjects[refKey];
+
+            if(relatedObject._representsToOne) {
+                // if the relatedObject is new, i.e., it doesn't have an ID yet
+                // we need to update the reference as soon as the referenced objects
+                // got assigned an ID
+
+                if(relatedObject.isNew()) {
+                    if(this.attributes[idRef]) {
+                        delete this.attributes[idRef];
+                    }
+                    relatedObject.once("change:" + (relatedObject.idAttribute||"id"), function() {
+                        this.set(idRef, relatedObject.id);
+                    }, this);
+                } else {
+                    this.attributes[idRef] = relatedObject.id;
+                }
+
+            } else {
+
+                // if any one of the referenced objects is new,
+                // we need to update the ID ref array as soon as that item
+                // got assigned an ID
+                var atLeastOneItemIsNew = false,
+                    idAttr;
+                this.attributes[idRef] = _.compact(relatedObject.map(function(m) {
+                    if(m.isNew()) {
+                        atLeastOneItemIsNew = true;
+                        idAttr = m.idAttribute || "id";
+                        return undefined;
+                    } else {
+                        return m.id;
+                    }
+                }));
+                if(atLeastOneItemIsNew) {
+                    relatedObject.once("change:" + idAttr, this._ensureIdReference.bind(this, idRef, refKey));
+                }
+            }
         },
 
         _setToOneReference: function(key, RelClass, value, options) {
@@ -574,15 +612,38 @@
             return json;
         },
 
+        //
+        // Also adds support for a `reset` flag (Backbone, by nature, only supports this for Collections).
         fetch: function(options) {
-            var result = Backbone.Collection.prototype.fetch.apply(this, arguments);
+
+            options = options ? _.clone(options) : {};
+            if (options.parse === void 0) options.parse = true;
+            var model = this;
+            var success = options.success;
+            options.success = function(resp) {
+                if(options.reset) {
+                    model.clear({silent: true});
+                    var defaults = _.result(this, 'defaults');
+                    if(defaults) model.set(defaults, {silent:true});
+                }
+                var attrs = model.parse(resp, options);
+                if (!model.set(attrs, options)) return false;
+                if (success) success(model, resp, options);
+                model.trigger('sync', model, resp, options);
+            };
+            var error = options.error;
+            options.error = function(resp) {
+                if (error) error(model, resp, options);
+                model.trigger('error', model, resp, options);
+            };
+            var result = this.sync('read', this, options);
+
+            // fetch embeddings
             var embeddingsKeys = _.keys(this.embeddings);
-            console.log("f", embeddingsKeys);
             for(var i=0; i<embeddingsKeys.length; i++) {
                 var key = embeddingsKeys[i];
                 var autoFetch = this.autoFetchRelated === true ||
                         (_.isArray(this.autoFetchRelated) && _.contains(this.autoFetchRelated, key));
-                console.log("af", key, autoFetch);
                 if(autoFetch) {
                     if(!this.get(key)) {
                         var RelClass = resolveRelClass(this.embeddings[key]);
@@ -595,6 +656,7 @@
                 }
             }
             this._fetchRelatedObjects();
+
             return result;
         },
 

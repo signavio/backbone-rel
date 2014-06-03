@@ -577,10 +577,12 @@
         fetch: function(options) {
             var result = Backbone.Collection.prototype.fetch.apply(this, arguments);
             var embeddingsKeys = _.keys(this.embeddings);
+            console.log("f", embeddingsKeys);
             for(var i=0; i<embeddingsKeys.length; i++) {
                 var key = embeddingsKeys[i];
                 var autoFetch = this.autoFetchRelated === true ||
                         (_.isArray(this.autoFetchRelated) && _.contains(this.autoFetchRelated, key));
+                console.log("af", key, autoFetch);
                 if(autoFetch) {
                     if(!this.get(key)) {
                         var RelClass = resolveRelClass(this.embeddings[key]);

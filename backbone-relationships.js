@@ -133,6 +133,9 @@
                 if(this.isNew()) return base;
                 return base.replace(/([^\/])$/, '$1/') + encodeURIComponent(this.id);
             } else if(this.parent) {
+                if(this.parent.isNew() && !this.parent.parent) {
+                    throw new Error("Could not get the parent model's URL as it has not been saved yet.");
+                }
                 base = _.result(this.parent, 'url');
                 suffix = _.result(this, 'urlSuffix');
                 if(base && suffix) {
@@ -778,6 +781,9 @@
             if(base) {
                 return base;
             } else if(this.parent) {
+                if(this.parent.isNew() && !this.parent.parent) {
+                    throw new Error("Could not get the parent model's URL as it has not been saved yet.");
+                }
                 base = _.result(this.parent, 'url');
                 suffix = _.result(this, 'urlSuffix');
                 if(base && suffix) {

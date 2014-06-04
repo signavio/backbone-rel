@@ -663,6 +663,7 @@
         sync: function(method, obj, options) {
             this._beforeSync();
             options = wrapOptionsCallbacks(this._afterSyncBeforeSet.bind(this), options);
+            if(this.parent && method === "create") method = "update"; // always PUT embedded models
             return Backbone.Model.prototype.sync.apply(this, arguments);
         },
 

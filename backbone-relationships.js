@@ -641,7 +641,12 @@
             };
             var result = this.sync('read', this, options);
 
-            // fetch embeddings
+            this._autoFetchEmbeddings();
+
+            return result;
+        },
+
+        _autoFetchEmbeddings: function() {
             var embeddingsKeys = _.keys(this.embeddings);
             for(var i=0; i<embeddingsKeys.length; i++) {
                 var key = embeddingsKeys[i];
@@ -659,8 +664,6 @@
                 }
             }
             this._fetchRelatedObjects();
-
-            return result;
         },
 
         sync: function(method, obj, options) {
@@ -832,6 +835,14 @@
 
         fetch: function(options) {
             options = wrapOptionsCallbacks(this._afterSetBeforeTrigger.bind(this), options);
+
+            // auto-fetch embeddings of items
+            this.once("sync", function() {
+                this.each(function(item) {
+                    item._autoFetchEmbeddings();
+                });
+            }, this);
+
             return Backbone.Collection.prototype.fetch.apply(this, [options]);
         },
 

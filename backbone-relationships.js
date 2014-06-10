@@ -103,6 +103,8 @@
             this.relatedObjects = {};
             this._relatedObjectsToFetch = [];
 
+            this._updateIdRefFor = {};
+
             // handle default values for relations
             var defaults,
                 references = this.references;
@@ -569,11 +571,16 @@
         },
 
         _listenToRelatedObject: function(key, current) {
-            // stop propagating 'deepchange' of current related object
+
             if(current) {
+                // stop propagating 'deepchange' of current related object
                 this.stopListening(current, 'deepchange', this._propagateDeepChange);
+                // stop listening to destroy and ID change events
                 if(current._representsToOne) {
                     this.stopListening(current, 'destroy', this._relatedObjectDestroyHandler);
+                    this.stopListening(current, 'change:' + (current.idAttribute || "id"), this._updateIdRefFor[key]);
+                } else {
+                    this.stopListening(current, 'add remove reset change:' + (current.idAttribute || "id"), this._updateIdRefFor[key]);
                 }
             }
 
@@ -581,8 +588,25 @@
             if(this.relatedObjects[key]) {
                 this.listenTo(this.relatedObjects[key], 'deepchange', this._propagateDeepChange);
                 if(this.relatedObjects[key]._representsToOne) {
+                    // listen to destroy to unset references
                     this.listenTo(this.relatedObjects[key], 'destroy', this._relatedObjectDestroyHandler);
+                    // listen to changes of the ID to update ref
+                    this._updateIdRefFor[key] = this._updateIdRefFor[key] || this._updateIdRef.bind(this, key);
+                    this.listenTo(this.relatedObjects[key], 'change:' + (this.relatedObjects[key].idAttribute || "id"), this._updateIdRefFor[key]);
+                } else {
+                    // listen to changes in the of item IDs and collection manipulations to update ID ref array
+                    this._updateIdRefFor[key] = this._updateIdRefFor[key] || this._updateIdRef.bind(this, key);
+                    this.listenTo(this.relatedObjects[key], 'add remove reset change:' + (this.relatedObjects[key].idAttribute || "id"), this._updateIdRefFor[key]);
                 }
+            }
+        },
+
+        _updateIdRef: function(key) {
+            if(this.references[key]) {
+                var idRef = refKeyToIdRefKey(this.references, key);
+                this._ensureIdReference(idRef, key);
+                this.trigger("change:" + idRef, this, this.get(idRef), {});
+                this.trigger("change", this, {});
             }
         },
 

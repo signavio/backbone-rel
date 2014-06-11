@@ -631,9 +631,16 @@
             var self = this;
             var json = Backbone.Model.prototype.toJSON.apply(this, arguments);
             _.each(this.inlineJSON, function(key) {
-                var obj = self.get(key);
-                if(obj && _.isFunction(obj.toJSON)) {
-                    json[key] = obj.toJSON();
+                var obj = self;
+                var path = key.split("."),
+                    nestedJson = json;
+                while(obj && path.length > 0 && _.isFunction(obj.toJSON)) {
+                    key = path.shift();
+                    obj = obj.get(key);
+                    if(obj && _.isFunction(obj.toJSON)) {
+                        nestedJson[key] = obj.toJSON();
+                        nestedJson = nestedJson[key];
+                    }
                 }
             });
             return json;

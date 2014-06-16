@@ -295,7 +295,7 @@
 
             if(value && value != current) {
 
-                if(value instanceof Backbone.RelCollection || value instanceof Backbone.RelModel) {
+                if(value._representsToMany || value._representsToOne) {
                     // a model object is directly assigned
                     // set its parent
                     this.relatedObjects[key] = value;
@@ -437,7 +437,7 @@
                 relatedObject = undefined;
             }
 
-            if(value instanceof Backbone.RelModel) {
+            if(value._representsToOne) {
                 // directly assign a model
                 if(value===relatedObject) return;
                 relatedObject = value;
@@ -487,7 +487,7 @@
 
             var relatedObject = this.relatedObjects[key];
 
-            if(value instanceof Backbone.RelCollection) {
+            if(value._representsToMany) {
                 // a collection model is directly assigned
 
                 if(value===relatedObject) return;

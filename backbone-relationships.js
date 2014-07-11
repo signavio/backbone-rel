@@ -689,6 +689,37 @@
             return result;
         },
 
+        /**
+         * Fetches the related object for each key in the provided keys array
+         * If no keys array is provided, it fetches the related objects for all
+         * relations that have not been synced before
+         */
+        fetchRelated: function(keys) {
+            if(!keys) {
+                var embeddingKeys = _.filter(_.keys(this.embeddings), function(key) {
+                    return !this.get(key) || (!this.get(key).isSyncing && !this.get(key).isSynced);
+                }, this);
+                var referencesKeys = _.filter(_.keys(this.references), function(key) {
+                    return this.get(key) && (!this.get(key).isSyncing && !this.get(key).isSynced);
+                }, this);
+
+                keys = _.union(embeddingKeys, referencesKeys);
+            }
+
+            for(var i=0; i<keys.length; i++) {
+                var key = keys[i];
+                if(!this.get(key)) {
+                    var RelClass = resolveRelClass(this.embeddings[key]);
+                    this.set(key, new RelClass());
+                }
+                var relatedObject = this.get(key);
+                if(!relatedObject.isSyncing && !_.contains(this._relatedObjectsToFetch, relatedObject)) {
+                    this._relatedObjectsToFetch.push(relatedObject);
+                }
+            }
+            this._fetchRelatedObjects();
+        },
+
         _autoFetchEmbeddings: function() {
             var embeddingsKeys = _.keys(this.embeddings);
             for(var i=0; i<embeddingsKeys.length; i++) {

@@ -706,14 +706,25 @@
                 keys = _.union(embeddingKeys, referencesKeys);
             }
 
+            if(_.isString(keys)) {
+                keys = [keys];
+            }
+
             for(var i=0; i<keys.length; i++) {
                 var key = keys[i];
-                if(!this.get(key)) {
+
+                if(!this.embeddings[key] && !this.references[key]) {
+                    throw new Error("Invalid relationship key '" + key + "'");
+                }
+
+                // init embeddings
+                if(!this.get(key) && this.embeddings[key]) {
                     var RelClass = resolveRelClass(this.embeddings[key]);
                     this.set(key, new RelClass());
                 }
+
                 var relatedObject = this.get(key);
-                if(!relatedObject.isSyncing && !_.contains(this._relatedObjectsToFetch, relatedObject)) {
+                if(relatedObject && !relatedObject.isSyncing && !_.contains(this._relatedObjectsToFetch, relatedObject)) {
                     this._relatedObjectsToFetch.push(relatedObject);
                 }
             }

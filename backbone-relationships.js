@@ -124,6 +124,10 @@
             this.set(attrs, options);
             this.changed = {};
 
+            if(!this.isNew()) {
+                this._autoFetchEmbeddings(true);
+            }
+
             this.initialize.apply(this, arguments);
         },
 
@@ -731,7 +735,7 @@
             this._fetchRelatedObjects();
         },
 
-        _autoFetchEmbeddings: function() {
+        _autoFetchEmbeddings: function(onlyMissingEmbeddings) {
             var embeddingsKeys = _.keys(this.embeddings);
             for(var i=0; i<embeddingsKeys.length; i++) {
                 var key = embeddingsKeys[i];
@@ -741,6 +745,8 @@
                     if(!this.get(key)) {
                         var RelClass = resolveRelClass(this.embeddings[key]);
                         this.set(key, new RelClass());
+                    } else if(onlyMissingEmbeddings) {
+                        continue;
                     }
                     var relatedObject = this.get(key);
                     if(!relatedObject.isSyncing && !_.contains(this._relatedObjectsToFetch, relatedObject)) {

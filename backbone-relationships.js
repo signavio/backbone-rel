@@ -735,7 +735,7 @@
             this._fetchRelatedObjects();
         },
 
-        _autoFetchEmbeddings: function(onlyMissingEmbeddings) {
+        _autoFetchEmbeddings: function(onlyUndefinedEmbeddings) {
             var embeddingsKeys = _.keys(this.embeddings);
             for(var i=0; i<embeddingsKeys.length; i++) {
                 var key = embeddingsKeys[i];
@@ -745,7 +745,7 @@
                     if(!this.get(key)) {
                         var RelClass = resolveRelClass(this.embeddings[key]);
                         this.set(key, new RelClass());
-                    } else if(onlyMissingEmbeddings) {
+                    } else if(onlyUndefinedEmbeddings) {
                         continue;
                     }
                     var relatedObject = this.get(key);

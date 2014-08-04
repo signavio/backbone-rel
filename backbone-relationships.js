@@ -928,11 +928,11 @@
             options = wrapOptionsCallbacks(this._afterSetBeforeTrigger.bind(this), options);
 
             // auto-fetch embeddings of items
-            this.once("sync", function() {
-                this.each(function(item) {
-                    item._autoFetchEmbeddings();
-                });
-            }, this);
+            //this.once("sync", function() {
+            //    this.each(function(item) {
+            //        item._autoFetchEmbeddings();
+            //    });
+            //}, this);
 
             return Backbone.Collection.prototype.fetch.apply(this, [options]);
         },
@@ -954,6 +954,30 @@
         _afterSetBeforeTrigger: function() {
             this.isSynced = true;
             delete this.isSyncing;
+
+            var triggerDeepSync = function() {
+                this.trigger("deepsync", this);
+            }.bind(this);
+
+            var afterAllItemsDeepSync,
+                itemsToSyncCount = 0,
+                itemSyncedCb = function() {
+                    afterAllItemsDeepSync();
+                };
+
+            this.each(function(item) {
+                if(item.isSyncing) {
+                    itemsToSyncCount++;
+                    item.once("deepsync", itemSyncedCb);
+                }
+            }, this);
+
+            if(itemsToSyncCount > 0) {
+                afterAllItemsDeepSync = _.after(itemsToSyncCount, triggerDeepSync);
+            } else {
+                triggerDeepSync();
+            }
+
         },
 
         _representsToMany: true

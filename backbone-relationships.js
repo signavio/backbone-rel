@@ -1,20 +1,23 @@
 (function(root, factory) {
-    // Set up Backbone appropriately for the environment. Start with AMD.
     if(typeof define === 'function' && define.amd) {
+        // AMD
+
         define(['underscore', 'backbone', 'exports'], function(_, Backbone, exports) {
             // Export global even in AMD case in case this script is loaded with
             // others that may still expect a global Backbone.
             root.Backbone = factory(root, exports, _, Backbone);
         });
 
-    // Next for Node.js or CommonJS.
     } else if(typeof exports !== 'undefined') {
+        // for Node.js or CommonJS
+
         var _ = require('underscore'),
             Backbone = require('backbone');
 
         factory(root, exports, _, Backbone);
-    // Finally, as a browser global.
     } else {
+        // as a browser global
+
         root.Backbone = factory(root, {}, root._, root.Backbone);
     }
 

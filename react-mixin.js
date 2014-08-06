@@ -55,6 +55,10 @@
             }
         },
 
+        /**
+         * Starts listening to the 'deepchange' event of the passed model or collection in the component's props
+         * to keep the component updated
+         */
         reactTo: function(modelOrCollection, key) {
             if(key && this.props[key]) {
                 if(this.props[key] == modelOrCollection) {
@@ -68,9 +72,13 @@
         },
 
         _handleDeepChange: function(changedModelOrCollection, opts) {
-            // TODO store opts.setOriginId to be able to decide in shouldComponentUpdate whether to re-render
-            console.log("update");
-            this.setProps(this.props);
+            if(this._owner) {
+                // TODO store opts.setOriginId to be able to decide in shouldComponentUpdate whether to re-render
+
+            } else {
+                // at the root component, trigger update the component tree
+                this.setProps(this.props);
+            }
         },
 
         /**
@@ -86,25 +94,6 @@
                     model.set(key, setTransformFn(value));
                 }.bind(this)
             };
-        },
-
-        /**
-         * Shortcut for saving the model bound to the view to be used as an event handler.
-         */
-        saveModel: function() {
-            if(this.props.model) {
-                this.props.model.save();
-            }
-        },
-
-        /**
-         * This method can be called in render() to wrap the content in a single container node
-         * of the given tagName and transfers all HTML props to that container
-         * E.g.: return wrapElements(<div/>, <div/>, ...);
-         */
-        wrapElements: function() {
-            var argsArray = Array.prototype.slice.call(arguments, 0); // convert Arguments[] to Array[]
-            return this.transferPropsTo(React.DOM[this.props.tagName || "div"].apply(this, [{}].concat(argsArray)));
         }
 
     };

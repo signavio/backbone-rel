@@ -77,7 +77,9 @@
 
             } else {
                 // at the root component, trigger update the component tree
-                this.setProps(this.props);
+                if(this.isMounted()) {
+                    this.setProps(this.props);
+                }
             }
         },
 

@@ -21,7 +21,53 @@
 
 }(this, function(root, _, Backbone, React) {
 
+
+    /**
+     * Performs equality by iterating through keys on an object and returning
+     * false when any key has values which are not strictly equal between
+     * objA and objB. Returns true when the values of all keys are strictly equal.
+     *
+     * @return {boolean}
+     */
+    function shallowEqual(objA, objB) {
+        if (objA === objB) {
+            return true;
+        }
+        var key;
+        // Test for A's keys different from B.
+        for (key in objA) {
+            if (objA.hasOwnProperty(key) &&
+                    (!objB.hasOwnProperty(key) || objA[key] !== objB[key])) {
+                return false;
+            }
+        }
+        // Test for B'a keys missing from A.
+        for (key in objB) {
+            if (objB.hasOwnProperty(key) && !objA.hasOwnProperty(key)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+
     var mixin = {
+
+        shouldComponentUpdate: function(nextProps, nextState) {
+            if(this.shouldComponentUpdateOverride) {
+                return this.shouldComponentUpdateOverride.apply(null, arguments);
+            }
+
+            return this._needsUpdate ||
+                   !shallowEqual(this.props, nextProps) ||
+                   !shallowEqual(this.state, nextState);
+        },
+
+        componentWillUpdate: function() {
+            if(this._needsUpdate) {
+                delete this._needsUpdate;
+            }
+        },
 
         componentDidMount: function() {
             this.initBackboneProps(this.props, true);
@@ -51,6 +97,7 @@
                 prop = this.props[key];
                 if(prop instanceof Backbone.Model || prop instanceof Backbone.Collection) {
                     prop.off("deepchange", this._handleDeepChange, this);
+                    prop.off("deepchange_propagated", this._handleDeepChangePropagatedThrottled, this);
                 }
             }
         },
@@ -60,26 +107,33 @@
          * to keep the component updated
          */
         reactTo: function(modelOrCollection, key) {
+            if (!this._handleDeepChangePropagatedThrottled) {
+                this._handleDeepChangePropagatedThrottled = _.throttle(this._handleDeepChangePropagated, 1);
+            }
+
             if(key && this.props[key]) {
                 if(this.props[key] == modelOrCollection) {
                     return;
                 } else {
                     modelOrCollection.off("deepchange", this._handleDeepChange, this);
+                    modelOrCollection.off("deepchange_propagated", this._handleDeepChangePropagatedThrottled, this);
                 }
             }
 
             modelOrCollection.on("deepchange", this._handleDeepChange, this);
+            modelOrCollection.on("deepchange_propagated", this._handleDeepChangePropagatedThrottled, this);
         },
 
         _handleDeepChange: function(changedModelOrCollection, opts) {
-            if(this._owner) {
-                // TODO store opts.setOriginId to be able to decide in shouldComponentUpdate whether to re-render
+            if(!this.isMounted()) return;
+            this._needsUpdate = true;
+        },
 
-            } else {
-                // at the root component, trigger update the component tree
-                if(this.isMounted()) {
-                    this.setProps(this.props);
-                }
+        _handleDeepChangePropagated: function(changedModelOrCollection, opts) {
+            if(!this.isMounted()) return;
+            if(!this._owner) {
+                // at the root component, trigger update of the component tree
+                this.setProps(this.props);
             }
         },
 

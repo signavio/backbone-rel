@@ -267,7 +267,6 @@
                 if(changes.length) this._pending = true;
                 for (var i = 0, l = changes.length; i < l; i++) {
                     this.trigger('change:' + changes[i], this, currentAll[changes[i]], options);
-
                 }
             }
 
@@ -287,6 +286,7 @@
             if(changes.length && !_.contains(this._deepChangePropagatedFor, nestedOptions.setOriginId)) {
                 this._deepChangePropagatedFor.push(nestedOptions.setOriginId);
                 this.trigger('deepchange', this, _.extend({ setOriginId: nestedOptions.setOriginId }, options));
+                this.trigger('deepchange_propagated', this, _.extend({ setOriginId: nestedOptions.setOriginId }, options));
             }
 
             // finally, fetch all related objects that need a fetch
@@ -797,6 +797,9 @@
             }
             this._deepChangePropagatedFor.push(opts.setOriginId);
             this.trigger('deepchange', changedModelOrCollection, opts);
+            changedModelOrCollection.once('deepchange_propagated', function() {
+                this.trigger('deepchange_propagated', changedModelOrCollection, opts);
+            }, this);
         },
 
         _fetchRelatedObjects: function() {
@@ -858,6 +861,7 @@
                 var originId = options.setOriginId || _.uniqueId();
                 this._deepChangePropagatedFor.push(originId);
                 this.trigger('deepchange', this, _.extend({ setOriginId: originId }, options));
+                this.trigger('deepchange_propagated', this, _.extend({ setOriginId: originId }, options))
             }.bind(this);
 
             this.on('add remove', function(model, collection, options) {

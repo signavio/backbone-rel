@@ -665,34 +665,9 @@
             return json;
         },
 
-        //
-        // Also adds support for a `reset` flag (Backbone, by nature, only supports this for Collections).
         fetch: function(options) {
-
-            options = options ? _.clone(options) : {};
-            if (options.parse === void 0) options.parse = true;
-            var model = this;
-            var success = options.success;
-            options.success = function(resp) {
-                if(options.reset) {
-                    model.clear({silent: true});
-                    var defaults = _.result(this, 'defaults');
-                    if(defaults) model.set(defaults, {silent:true});
-                }
-                var attrs = model.parse(resp, options);
-                if (!model.set(attrs, options)) return false;
-                if (success) success(model, resp, options);
-                model.trigger('sync', model, resp, options);
-            };
-            var error = options.error;
-            options.error = function(resp) {
-                if (error) error(model, resp, options);
-                model.trigger('error', model, resp, options);
-            };
-            var result = this.sync('read', this, options);
-
+            var result = Backbone.Model.prototype.fetch.apply(this, arguments);
             this._autoFetchEmbeddings();
-
             return result;
         },
 

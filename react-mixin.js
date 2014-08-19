@@ -2,7 +2,7 @@
     if(typeof define === 'function' && define.amd) {
         // AMD
 
-        define(['underscore', 'backbone', 'react'], function(_, Backbone, React) {
+        define(['underscore', 'backbone-relationships', 'react'], function(_, Backbone, React) {
             return factory(root, _, Backbone, React);
         });
 
@@ -10,7 +10,7 @@
         // for Node.js or CommonJS
 
         var _ = require('underscore'),
-            Backbone = require('backbone'),
+            Backbone = require('backbone-relationships'),
             React = require('react');
         module.exports = factory(root, _, Backbone, React);
     } else {

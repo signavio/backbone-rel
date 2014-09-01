@@ -218,16 +218,17 @@
             // Check for changes of `id`.
             if(this.idAttribute in attrs) this.id = attrs[this.idAttribute];
 
-            // Here's some potential do some optimization if performance should become a concern:
-            // precalculate the idRefKeys for all references and do a simple lookup
-            var findReferenceKey = function(key) {
-                var references = this.references;
-                if(references[key]) return key;
-                return _.find(_.keys(references), function(refKey) {
-                    return refKeyToIdRefKey(references, refKey) == key;
-                });
-            }.bind(this);
+            // Precalculate the idRefKeys for all references to improve performance of the lookups
+            var refKeys = _.keys(this.references);
+            var refAndIdRefKeys = {};
+            for(var i=0; i<refKeys.length; i++) {
+                refAndIdRefKeys[refKeys[i]] = refKeys[i];
+                refAndIdRefKeys[refKeyToIdRefKey(this.references, refKeys[i])] = refKeys[i];
+            }
 
+            var findReferenceKey = function(key) {
+                return refAndIdRefKeys[key];
+            };
 
             // For each `set` attribute, update or delete the current value.
             for (attr in attrs) {

@@ -82,10 +82,10 @@
         references: {},
         embeddings: {},
 
-        // Property to control whether an embedding shall be inlined in this model's JSON representation.
-        // Useful when the embedding shall be saved to the server together with its parent.
-        // If a key of an embedding is added as a string to this array, the result of #toJSON() will have
-        // a property of that key, under which the embedded object's JSON representation is nested.
+        // Property to control whether a related object shall be inlined in this model's JSON representation.
+        // Useful when the related object shall be saved to the server together with its parent/referencing object.
+        // If a relationship key is added as a string to this array, the result of #toJSON() will have
+        // a property of that key, under which the related object's JSON representation is nested.
         inlineJSON: [],
 
         // Property to control whether referenced objects shall be fetched automcatically when set.
@@ -441,7 +441,7 @@
             var id = value[RelClass.prototype.idAttribute||"id"] || value;
 
             // reset relatedObject if the ID reference changed
-            if(relatedObject && relatedObject.id != id) {
+            if(relatedObject && relatedObject[relatedObject.idAttribute||"id"] && relatedObject.id != id) {
                 relatedObject = undefined;
             }
 
@@ -647,10 +647,19 @@
             }
         },
 
-        toJSON: function() {
+        // Override #toJSON to add support for inlining JSON representations of related objects
+        // in the JSON of this model. The related objects to be inline can be specified via the
+        // `inlineJSON` property or option.
+        toJSON: function(options) {
+            options = options || {};
             var self = this;
             var json = Backbone.Model.prototype.toJSON.apply(this, arguments);
-            _.each(this.inlineJSON, function(key) {
+
+            var inlineJSON = _.uniq(_.compact(_.flatten(
+                _.union([options.inlineJSON], [this.inlineJSON])
+            )));
+
+            _.each(inlineJSON, function(key) {
                 var obj = self;
                 var path = key.split("."),
                     nestedJson = json;

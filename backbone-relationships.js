@@ -749,6 +749,9 @@
             this._beforeSync();
             options = wrapOptionsCallbacks(this._afterSyncBeforeSet.bind(this), options);
             if(this.parent && method === "create") method = "update"; // always PUT embedded models
+            if(options.forceMethod) {
+                method = options.forceMethod;
+            }
             return Backbone.Model.prototype.sync.apply(this, arguments);
         },
 

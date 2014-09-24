@@ -645,6 +645,18 @@
             if(this.parent.get(this.keyInParent) !== this) {
                 this.parent.set(this.keyInParent, this);
             }
+
+            this.trigger("embedded", this, parent, keyInParent);
+        },
+
+        // Override #previous to add support for getting previous values of references and embeddings
+        // in "change" events
+        previous: function(attr) {
+            var result = Backbone.Model.prototype.previous.apply(this, arguments);
+            if(result) return result;
+
+            if (attr == null || !this._previousRelatedObjects) return null;
+            return this._previousRelatedObjects[attr];
         },
 
         // Override #toJSON to add support for inlining JSON representations of related objects
@@ -911,6 +923,8 @@
             if(this.parent.get(this.keyInParent) !== this) {
                 this.parent.set(this.keyInParent, this);
             }
+
+            this.trigger("embedded", this, parent, keyInParent);
         },
 
         sync: function() {

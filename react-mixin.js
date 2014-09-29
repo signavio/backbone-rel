@@ -110,18 +110,27 @@
             if (!this._handleDeepChangePropagatedThrottled) {
                 this._handleDeepChangePropagatedThrottled = _.throttle(this._handleDeepChangePropagated, 1);
             }
+            if (!this._handleForceUpdateEventThrottled) {
+                this._handleForceUpdateEventThrottled = _.throttle(this._handleForceUpdateEvent, 1);
+            }
 
             if(key && this.props[key]) {
                 if(this.props[key] == modelOrCollection) {
                     return;
                 } else {
-                    modelOrCollection.off("deepchange", this._handleDeepChange, this);
-                    modelOrCollection.off("deepchange_propagated", this._handleDeepChangePropagatedThrottled, this);
+                    this.stopReacting(modelOrCollection);
                 }
             }
 
             modelOrCollection.on("deepchange", this._handleDeepChange, this);
             modelOrCollection.on("deepchange_propagated", this._handleDeepChangePropagatedThrottled, this);
+            modelOrCollection.on("forceUpdate", this._handleForceUpdateEventThrottled, this);
+        },
+
+        stopReacting: function(modelOrCollection) {
+            modelOrCollection.off("deepchange", this._handleDeepChange, this);
+            modelOrCollection.off("deepchange_propagated", this._handleDeepChangePropagatedThrottled, this);
+            modelOrCollection.off("forceUpdate", this._handleForceUpdateEventThrottled, this);
         },
 
         _handleDeepChange: function(changedModelOrCollection, opts) {
@@ -131,10 +140,15 @@
 
         _handleDeepChangePropagated: function(changedModelOrCollection, opts) {
             if(!this.isMounted()) return;
-            if(!this._owner) {
+            if(this._mountDepth === 0) {
                 // at the root component, trigger update of the component tree
                 this.setProps(this.props);
             }
+        },
+
+        _handleForceUpdateEvent: function() {
+            if(!this.isMounted()) return;
+            this.forceUpdate();
         },
 
         /**

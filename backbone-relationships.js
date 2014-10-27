@@ -660,7 +660,7 @@
         },
 
         // Override #toJSON to add support for inlining JSON representations of related objects
-        // in the JSON of this model. The related objects to be inline can be specified via the
+        // in the JSON of this model. The related objects to be inlined can be specified via the
         // `inlineJSON` property or option.
         toJSON: function(options) {
             options = options || {};
@@ -679,8 +679,13 @@
                     key = path.shift();
                     obj = obj.get(key);
                     if(obj && _.isFunction(obj.toJSON)) {
+                        // nest JSON represention ob embedded object into the hierarchy
                         nestedJson[key] = obj.toJSON();
                         nestedJson = nestedJson[key];
+                    } else if(obj===null) {
+                        // if an embedded object was unset, i.e., set to null, we have to 
+                        // notify the server by nesting a null value into the JSON hierarchy
+                        nestedJson[key] = null;
                     }
                 }
             });

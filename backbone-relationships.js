@@ -138,6 +138,7 @@
             var base =
                 _.result(this, 'urlRoot') ||
                 _.result(this.collection, 'url');
+            var suffix = _.result(this, 'urlSuffix');
             if(base) {
                 if(this.isNew()) return base;
                 return base.replace(/([^\/])$/, '$1/') + encodeURIComponent(this.id);
@@ -146,13 +147,12 @@
                     throw new Error("Could not get the parent model's URL as it has not been saved yet.");
                 }
                 base = _.result(this.parent, 'url');
-                suffix = _.result(this, 'urlSuffix');
                 if(base && suffix) {
                     return base.replace(/([^\/])$/, '$1/') + suffix.replace(/(\/?)(.*)/, '$2');
                 }
             }
 
-            throw new Error('Could not build url for the model');
+            throw new Error('Could not build url for the model with ID "' + this.id + '" (URL suffix: "' + suffix + '")');
         },
 
         urlSuffix: function() {

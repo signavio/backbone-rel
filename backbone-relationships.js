@@ -482,8 +482,8 @@
                     try {
                         url = _.result(relatedObject, "url");
                     } catch(e) {
-                        if(console && _.isFunction(console.warn)) {
-                            console.warn("Could not build url to auto-fetch referenced model for key '" + key +"'", e);
+                        if(autoFetch && console && _.isFunction(console.warn)) {
+                            console.warn("Could not build url to auto-fetch referenced model for key '" + key +"'", e.stack);
                         }
                     }
                     if(autoFetch && url && !relatedObject.isSynced && !relatedObject.isSyncing && !_.contains(this._relatedObjectsToFetch, relatedObject)) {
@@ -570,7 +570,7 @@
                         try {
                             url = _.result(item, "url");
                         } catch(e) {
-                            if(console && _.isFunction(console.warn)) {
+                            if(autoFetch && console && _.isFunction(console.warn)) {
                                 console.warn("Could not build url to auto-fetch referenced model for key '" + key + "'", e);
                             }
                         }

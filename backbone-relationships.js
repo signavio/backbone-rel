@@ -21,7 +21,9 @@
         root.Backbone = factory(root, {}, root._, root.Backbone);
     }
 
-}(this, function(root, exports, _, Backbone) {
+}(this, function(root, exports, _, BackboneBase) {
+
+    var Backbone = _.extend({}, BackboneBase);
 
     // Resolve the model/collection class that is specified for a relation.
     // Supports lazy resolution when passing in a function.
@@ -33,7 +35,8 @@
                 var resolvedClass = cls();
                 if(!resolvedClass.prototype._representsToOne && !resolvedClass.prototype._representsToMany) {
                     throw new Error("The model class for the relation could not be resolved. " +
-                        "It must extend either Backbone.RelModel or Backbone.RelCollection.");
+                        "It must extend either Backbone.Model or Backbone.Collection and the " +
+                        "backbone-relationships extension must be loaded");
                 }
                 return resolvedClass;
             }
@@ -78,7 +81,7 @@
 
     var modelOptions = ['url', 'urlRoot', 'collection'];
 
-    Backbone.RelModel = Backbone.Model.extend({
+    Backbone.Model = BackboneBase.Model.extend({
         references: {},
         embeddings: {},
 
@@ -169,7 +172,7 @@
                 return this.relatedObjects[attr];
             } else {
                 // otherwise return the regular attribute
-                return Backbone.Model.prototype.get.apply(this, arguments);
+                return BackboneBase.Model.prototype.get.apply(this, arguments);
             }
         },
 
@@ -652,7 +655,7 @@
         // Override #previous to add support for getting previous values of references and embeddings
         // in "change" events
         previous: function(attr) {
-            var result = Backbone.Model.prototype.previous.apply(this, arguments);
+            var result = BackboneBase.Model.prototype.previous.apply(this, arguments);
             if(result) return result;
 
             if (attr == null || !this._previousRelatedObjects) return null;
@@ -665,7 +668,7 @@
         toJSON: function(options) {
             options = options || {};
             var self = this;
-            var json = Backbone.Model.prototype.toJSON.apply(this, arguments);
+            var json = BackboneBase.Model.prototype.toJSON.apply(this, arguments);
 
             var inlineJSON = _.uniq(_.compact(_.flatten(
                 _.union([options.inlineJSON], [this.inlineJSON])
@@ -693,7 +696,7 @@
         },
 
         fetch: function(options) {
-            var result = Backbone.Model.prototype.fetch.apply(this, arguments);
+            var result = BackboneBase.Model.prototype.fetch.apply(this, arguments);
             this._autoFetchEmbeddings();
             return result;
         },
@@ -769,7 +772,7 @@
             if(options.forceMethod) {
                 method = options.forceMethod;
             }
-            return Backbone.Model.prototype.sync.apply(this, arguments);
+            return BackboneBase.Model.prototype.sync.apply(this, arguments);
         },
 
         _beforeSync: function() {
@@ -857,7 +860,7 @@
 
     });
 
-    Backbone.RelCollection = Backbone.Collection.extend({
+    Backbone.Collection = BackboneBase.Collection.extend({
 
         constructor: function() {
 
@@ -879,7 +882,7 @@
             //    triggerOriginalDeepChange(options);
             //});
 
-            return Backbone.Collection.prototype.constructor.apply(this, arguments);
+            return BackboneBase.Collection.prototype.constructor.apply(this, arguments);
         },
 
         url: function() {
@@ -910,7 +913,7 @@
 
         set: function() {
             this._deepChangePropagatedFor = [];
-            return Backbone.Collection.prototype.set.apply(this, arguments);
+            return BackboneBase.Collection.prototype.set.apply(this, arguments);
         },
 
         // Sets the parent for an embedded collection
@@ -935,7 +938,7 @@
         sync: function() {
             this._beforeSync();
             //options = wrapOptionsCallbacks(this._afterSetBeforeTrigger, options);
-            return Backbone.Collection.prototype.sync.apply(this, arguments);
+            return BackboneBase.Collection.prototype.sync.apply(this, arguments);
         },
 
         fetch: function(options) {
@@ -948,7 +951,7 @@
             //    });
             //}, this);
 
-            return Backbone.Collection.prototype.fetch.apply(this, [options]);
+            return BackboneBase.Collection.prototype.fetch.apply(this, [options]);
         },
 
         _beforeSync: function() {
@@ -958,7 +961,7 @@
         _prepareModel: function(attrs, options) {
             // set isSynced flag on each item model
             // before the the "add" event is triggered
-            var model = Backbone.Collection.prototype._prepareModel.apply(this, arguments);
+            var model = BackboneBase.Collection.prototype._prepareModel.apply(this, arguments);
             if(model && this.isSyncing) {
                 model.isSynced = true;
             }
@@ -997,7 +1000,7 @@
         _representsToMany: true
 
     });
-
+    
     _.extend(exports, Backbone);
     return Backbone;
 }));

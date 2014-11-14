@@ -686,7 +686,7 @@
                         nestedJson[key] = obj.toJSON();
                         nestedJson = nestedJson[key];
                     } else if(obj===null) {
-                        // if an embedded object was unset, i.e., set to null, we have to 
+                        // if an embedded object was unset, i.e., set to null, we have to
                         // notify the server by nesting a null value into the JSON hierarchy
                         nestedJson[key] = null;
                     }
@@ -865,6 +865,7 @@
         constructor: function() {
 
             var triggerOriginalDeepChange = function(options) {
+                options = options || {};
                 // Trigger original 'deepchange' event, which will be propagated through the related object graph
                 var originId = options.setOriginId || _.uniqueId();
                 this._deepChangePropagatedFor.push(originId);
@@ -1000,7 +1001,7 @@
         _representsToMany: true
 
     });
-    
+
     _.extend(exports, Backbone);
     return Backbone;
 }));

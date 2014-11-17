@@ -319,7 +319,12 @@
                     this.relatedObjects[key].setParent(this, key);
                 } else {
                     // update embedded model's attributes
-                    this.relatedObjects[key].set(value, options);
+                    
+                    if(this.relatedObjects[key]._representsToMany) {
+                        this.relatedObjects[key][options.reset ? 'reset' : 'set'](value, options);
+                    } else {
+                        this.relatedObjects[key].set(value, options);
+                    }
                 }
 
             } else {

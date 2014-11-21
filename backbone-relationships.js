@@ -167,7 +167,7 @@
         },
 
         get: function(attr) {
-            if(this.embeddings[attr] || this.references[attr]) {
+            if(this.embeddings[attr] || this.references[attr]) {
                 // return related object if the key corresponds to a reference or embedding
                 return this.relatedObjects[attr];
             } else {
@@ -224,7 +224,9 @@
             // Precalculate the idRefKeys for all references to improve performance of the lookups
             var refKeys = _.keys(this.references);
             var refAndIdRefKeys = {};
-            for(var i=0; i<refKeys.length; i++) {
+            var i;
+
+            for(i=0; i<refKeys.length; i++) {
                 refAndIdRefKeys[refKeys[i]] = refKeys[i];
                 refAndIdRefKeys[refKeyToIdRefKey(this.references, refKeys[i])] = refKeys[i];
             }
@@ -244,7 +246,7 @@
                 } else if(referenceKey = findReferenceKey(attr)) {
 
                     // side-loaded JSON structures take precedence over ID references
-                    if(attr != referenceKey && attrs[referenceKey]) {
+                    if(attr !== referenceKey && attrs[referenceKey]) {
                         // is ID ref, but also side-loaded data is present in attrs
                         continue; // ignore attr
                     }
@@ -269,7 +271,8 @@
             // Trigger all relevant attribute changes.
             if(!silent) {
                 if(changes.length) this._pending = true;
-                for (var i = 0, l = changes.length; i < l; i++) {
+                var l;
+                for (i = 0, l = changes.length; i < l; i++) {
                     this.trigger('change:' + changes[i], this, currentAll[changes[i]], options);
                 }
             }
@@ -304,7 +307,7 @@
             var RelClass = resolveRelClass(this.embeddings[key]);
             var current = this.relatedObjects[key];
 
-            if(value && value != current) {
+            if(value && value !== current) {
 
                 if(value._representsToMany || value._representsToOne) {
                     // a model object is directly assigned
@@ -319,7 +322,7 @@
                     this.relatedObjects[key].setParent(this, key);
                 } else {
                     // update embedded model's attributes
-                    
+
                     if(this.relatedObjects[key]._representsToMany) {
                         this.relatedObjects[key][options.reset ? 'reset' : 'set'](value, options);
                     } else {
@@ -337,7 +340,7 @@
                 delete this.relatedObjects[key];
             }
 
-            if(current != this.relatedObjects[key]) {
+            if(current !== this.relatedObjects[key]) {
                 changes.push(key);
 
                 this._listenToRelatedObject(key, current);
@@ -347,7 +350,7 @@
                     current.parent = null;
                 }
             }
-            if(this._previousRelatedObjects[key] != this.relatedObjects[key]) {
+            if(this._previousRelatedObjects[key] !== this.relatedObjects[key]) {
                 this.changed[key] = this.relatedObjects[key];
             } else {
                 delete this.changed[key];
@@ -384,12 +387,12 @@
             if(!_.isEqual(currentId, this.attributes[idRef])) {
                 changes.push(idRef);
             }
-            if(current != this.relatedObjects[key]) {
+            if(current !== this.relatedObjects[key]) {
                 changes.push(key);
                 this._listenToRelatedObject(key, current);
             }
 
-            if(this._previousRelatedObjects[key] != this.relatedObjects[key]) {
+            if(this._previousRelatedObjects[key] !== this.relatedObjects[key]) {
                 this.changed[key] = this.relatedObjects[key];
             } else {
                 delete this.changed[key];
@@ -449,7 +452,7 @@
             var id = value[RelClass.prototype.idAttribute||"id"] || value;
 
             // reset relatedObject if the ID reference changed
-            if(relatedObject && relatedObject[relatedObject.idAttribute||"id"] && relatedObject.id != id) {
+            if(relatedObject && relatedObject[relatedObject.idAttribute||"id"] && relatedObject.id !== id) {
                 relatedObject = undefined;
             }
 
@@ -473,7 +476,7 @@
                 relatedObject.isSynced = true;
 
                 // remove side-loaded object from the models to fetch
-                if(relatedObject != this)
+                if(relatedObject !== this)
                     this._relatedObjectsToFetch = _.without(this._relatedObjectsToFetch, relatedObject);
             } else {
                 // if only an ID reference is provided,
@@ -559,7 +562,7 @@
                     item.isSynced = true;
 
                     // remove side-loaded object from the models to fetch
-                    if(item != this) {
+                    if(item !== this) {
                         this._relatedObjectsToFetch = _.without(this._relatedObjectsToFetch, item);
                     }
                 } else {
@@ -619,11 +622,11 @@
                     // listen to destroy to unset references
                     this.listenTo(this.relatedObjects[key], 'destroy', this._relatedObjectDestroyHandler);
                     // listen to changes of the ID to update ref
-                    this._updateIdRefFor[key] = this._updateIdRefFor[key] || this._updateIdRef.bind(this, key);
+                    this._updateIdRefFor[key] = this._updateIdRefFor[key] || this._updateIdRef.bind(this, key);
                     this.listenTo(this.relatedObjects[key], 'change:' + (this.relatedObjects[key].idAttribute || "id"), this._updateIdRefFor[key]);
                 } else {
                     // listen to changes in the of item IDs and collection manipulations to update ID ref array
-                    this._updateIdRefFor[key] = this._updateIdRefFor[key] || this._updateIdRef.bind(this, key);
+                    this._updateIdRefFor[key] = this._updateIdRefFor[key] || this._updateIdRef.bind(this, key);
                     this.listenTo(this.relatedObjects[key], 'add remove reset change:' + (this.relatedObjects[key].idAttribute || "id"), this._updateIdRefFor[key]);
                 }
             }
@@ -643,7 +646,7 @@
         setParent: function(parent, keyInParent) {
             var self = this;
             this.keyInParent = keyInParent || _.find(_.keys(parent.embeddings), function(key) {
-                return parent.get(key) == self;
+                return parent.get(key) === self;
             });
             if(!this.keyInParent) {
                 throw new Error("A key for the embedding in the parent must be specified as it could not be detected automatically.");
@@ -663,7 +666,7 @@
             var result = BackboneBase.Model.prototype.previous.apply(this, arguments);
             if(result) return result;
 
-            if (attr == null || !this._previousRelatedObjects) return null;
+            if (attr === null || !this._previousRelatedObjects) return null;
             return this._previousRelatedObjects[attr];
         },
 
@@ -671,12 +674,12 @@
         // in the JSON of this model. The related objects to be inlined can be specified via the
         // `inlineJSON` property or option.
         toJSON: function(options) {
-            options = options || {};
+            options = options || {};
             var self = this;
             var json = BackboneBase.Model.prototype.toJSON.apply(this, arguments);
 
             var inlineJSON = _.uniq(_.compact(_.flatten(
-                _.union([options.inlineJSON], [this.inlineJSON])
+                _.union([options.inlineJSON], [this.inlineJSON])
             )));
 
             _.each(inlineJSON, function(key) {
@@ -700,7 +703,7 @@
             return json;
         },
 
-        fetch: function(options) {
+        fetch: function() {
             var result = BackboneBase.Model.prototype.fetch.apply(this, arguments);
             this._autoFetchEmbeddings();
             return result;
@@ -714,10 +717,10 @@
         fetchRelated: function(keys) {
             if(!keys) {
                 var embeddingKeys = _.filter(_.keys(this.embeddings), function(key) {
-                    return !this.get(key) || (!this.get(key).isSyncing && !this.get(key).isSynced);
+                    return !this.get(key) || (!this.get(key).isSyncing && !this.get(key).isSynced);
                 }, this);
                 var referencesKeys = _.filter(_.keys(this.references), function(key) {
-                    return this.get(key) && (!this.get(key).isSyncing && !this.get(key).isSynced);
+                    return this.get(key) && (!this.get(key).isSyncing && !this.get(key).isSynced);
                 }, this);
 
                 keys = _.union(embeddingKeys, referencesKeys);
@@ -818,7 +821,7 @@
         _fetchRelatedObjects: function() {
             for (var i=0; i<this._relatedObjectsToFetch.length; i++) {
                 var model = this._relatedObjectsToFetch[i];
-                if(model==this) continue; // do not fetch again while setting
+                if(model===this) continue; // do not fetch again while setting
 
                  // test whether fetching has already been triggered by another relation
                 if(model.isSyncing) {
@@ -855,7 +858,7 @@
         // This callback ensures that relations are unset, when a related object is destroyed
         _relatedObjectDestroyHandler: function(destroyedObject) {
             _.each(this.relatedObjects, function(relObj, key) {
-                if(relObj == destroyedObject) {
+                if(relObj === destroyedObject) {
                     this.unset(key);
                 }
             }, this);
@@ -875,7 +878,7 @@
                 var originId = options.setOriginId || _.uniqueId();
                 this._deepChangePropagatedFor.push(originId);
                 this.trigger('deepchange', this, _.extend({ setOriginId: originId }, options));
-                this.trigger('deepchange_propagated', this, _.extend({ setOriginId: originId }, options))
+                this.trigger('deepchange_propagated', this, _.extend({ setOriginId: originId }, options));
             }.bind(this);
 
             this.on('add remove', function(model, collection, options) {
@@ -900,7 +903,7 @@
                     throw new Error("Could not get the parent model's URL as it has not been saved yet.");
                 }
                 base = _.result(this.parent, 'url');
-                suffix = _.result(this, 'urlSuffix');
+                var suffix = _.result(this, 'urlSuffix');
                 if(base && suffix) {
                     return base.replace(/([^\/])$/, '$1/') + suffix.replace(/(\/?)(.*)/, '$2');
                 }
@@ -927,7 +930,7 @@
         setParent: function(parent, keyInParent) {
             var self = this;
             this.keyInParent = keyInParent || _.find(_.keys(parent.embeddings), function(key) {
-                return parent.get(key) == self;
+                return parent.get(key) === self;
             });
             if(!this.keyInParent) {
                 throw new Error("A key for the embedding in the parent must be specified as it could not be detected automatically.");
@@ -964,7 +967,7 @@
             this.isSyncing = true;
         },
 
-        _prepareModel: function(attrs, options) {
+        _prepareModel: function() {
             // set isSynced flag on each item model
             // before the the "add" event is triggered
             var model = BackboneBase.Collection.prototype._prepareModel.apply(this, arguments);

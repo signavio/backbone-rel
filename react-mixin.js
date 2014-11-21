@@ -19,7 +19,7 @@
         root.Backbone.ReactMixin = factory(root, root._, root.Backbone, root.React);
     }
 
-}(this, function(root, _, Backbone, React) {
+}(this, function(root, _, Backbone) {
 
 
     /**
@@ -115,7 +115,7 @@
             }
 
             if(key && this.props[key]) {
-                if(this.props[key] == modelOrCollection) {
+                if(this.props[key] === modelOrCollection) {
                     return;
                 } else {
                     this.stopReacting(modelOrCollection);
@@ -133,12 +133,12 @@
             modelOrCollection.off("forceUpdate", this._handleForceUpdateEventThrottled, this);
         },
 
-        _handleDeepChange: function(changedModelOrCollection, opts) {
+        _handleDeepChange: function() {
             if(!this.isMounted()) return;
             this._needsUpdate = true;
         },
 
-        _handleDeepChangePropagated: function(changedModelOrCollection, opts) {
+        _handleDeepChangePropagated: function() {
             if(!this.isMounted()) return;
             if(this._mountDepth === 0) {
                 // at the root component, trigger update of the component tree

@@ -196,7 +196,12 @@
             // pass the setOriginId down to the nested set calls via options
             var nestedOptions = _.extend({ setOriginId: _.uniqueId() }, options);
             if(nestedOptions.collection) {
+                // `collection` option should not propagate to nested set calls
                 delete nestedOptions.collection;
+            }
+            if(nestedOptions.clear) {
+                // `clear` option should not propagate to nested set calls
+                delete nestedOptions.clear;
             }
 
             this._deepChangePropagatedFor = [];
@@ -235,13 +240,43 @@
                 return refAndIdRefKeys[key];
             };
 
+            // If `clear` is set, calculate the keys to be unset and add those keys to attrs
+            var keysToUnset = [];
+            if(options.clear) {
+                var defaults = _.result(this, 'defaults') || {};
+
+                keysToUnset = _.difference(
+                    _.union(_.keys(this.attributes), _.keys(this.relatedObjects)),
+                    _.keys(attrs),
+                    _.map(_.keys(attrs), findReferenceKey)
+                );
+
+                // clone because the keysToUnset array is modified from within the loop
+                var keysToUnsetCopy = _.clone(keysToUnset);
+                for(i=0, l=keysToUnsetCopy.length; i<l; ++i) {
+                    var keyToUnset = keysToUnsetCopy[i];
+                    if(defaults.hasOwnProperty(keyToUnset)) {
+                        // reset to default value instead of deleting
+                        attrs[keyToUnset] = defaults[keyToUnset];
+                        keysToUnset = _.without(keysToUnset, keyToUnset);
+                    } else {
+                        // add to attrs just to make sure the key will be traversed in the for loop
+                        attrs[keyToUnset] = void 0;
+                    }
+                }
+            }
+
+            //console.log(keysToUnset, _.clone(attrs));
+
             // For each `set` attribute, update or delete the current value.
             for (attr in attrs) {
+                
                 val = attrs[attr];
 
                 if(this.embeddings[attr]) {
 
-                    this._setEmbedding(attr, val, nestedOptions, changes);
+                    var opts = _.extend({}, nestedOptions, { unset: unset || _.contains(keysToUnset, attr) });
+                    this._setEmbedding(attr, val, opts, changes);
 
                 } else if(referenceKey = findReferenceKey(attr)) {
 
@@ -250,7 +285,8 @@
                         // is ID ref, but also side-loaded data is present in attrs
                         continue; // ignore attr
                     }
-                    this._setReference(referenceKey, val, nestedOptions, changes);
+                    var opts = _.extend({}, nestedOptions, { unset: unset || _.contains(keysToUnset, referenceKey) });
+                    this._setReference(referenceKey, val, opts, changes);
 
                 } else {
 
@@ -261,7 +297,7 @@
                     } else {
                         delete this.changed[attr];
                     }
-                    unset ? delete current[attr] : current[attr] = val;
+                    unset || _.contains(keysToUnset, attr) ? delete current[attr] : current[attr] = val;
 
                 }
             }
@@ -425,10 +461,10 @@
                 }
 
             } else {
-
                 // if any one of the referenced objects is new,
                 // we need to update the ID ref array as soon as that item
                 // got assigned an ID
+
                 var atLeastOneItemIsNew = false,
                     idAttr;
                 this.attributes[idRef] = _.compact(relatedObject.map(function(m) {
@@ -443,6 +479,7 @@
                 if(atLeastOneItemIsNew) {
                     relatedObject.once("change:" + idAttr, this._ensureIdReference.bind(this, idRef, refKey));
                 }
+
             }
         },
 
@@ -467,6 +504,7 @@
             if(value instanceof Object) {
                 // if the related model data is side-loaded,
                 // create/update the related model instance
+
                 if(relatedObject) {
                     relatedObject.set(value, options);
                 } else {
@@ -478,9 +516,11 @@
                 // remove side-loaded object from the models to fetch
                 if(relatedObject !== this)
                     this._relatedObjectsToFetch = _.without(this._relatedObjectsToFetch, relatedObject);
+
             } else {
                 // if only an ID reference is provided,
                 // instantiate the model
+
                 if(!relatedObject) {
                     var attrs = {};
                     attrs[RelClass.prototype.idAttribute||"id"] = id;

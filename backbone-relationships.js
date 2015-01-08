@@ -257,7 +257,19 @@
                     var keyToUnset = keysToUnsetCopy[i];
                     if(defaults.hasOwnProperty(keyToUnset)) {
                         // reset to default value instead of deleting
-                        attrs[keyToUnset] = defaults[keyToUnset];
+                        var defVal = defaults[keyToUnset];
+
+                        // ensure that the default is an actual Backbone model/collection
+                        // instead of plain JSON hash or array (which would be applyed to the current
+                        // referenced objects instead of replacing them)
+                        //if(!defVal._representsToMany && !defVal._representsToOne) {
+                        //    var relationship = this.embeddings[keyToUnset] || this.references[keyToUnset];
+                        //    var RelClass = relationship && resolveRelClass(relationship);
+                        //    if(RelClass) defVal = new RelClass(defVal, nestedOptions);
+                        //    console.log(keyToUnset, defVal);
+                        //}
+
+                        attrs[keyToUnset] = defVal;
                         keysToUnset = _.without(keysToUnset, keyToUnset);
                     } else {
                         // add to attrs just to make sure the key will be traversed in the for loop
@@ -266,8 +278,6 @@
                 }
             }
 
-            //console.log(keysToUnset, _.clone(attrs));
-
             // For each `set` attribute, update or delete the current value.
             for (attr in attrs) {
                 
@@ -275,7 +285,7 @@
 
                 if(this.embeddings[attr]) {
 
-                    var opts = _.extend({}, nestedOptions, { unset: unset || _.contains(keysToUnset, attr) });
+                    var opts = _.extend({}, nestedOptions, { clear: options.clear },  { unset: unset || _.contains(keysToUnset, attr) });
                     this._setEmbedding(attr, val, opts, changes);
 
                 } else if(referenceKey = findReferenceKey(attr)) {
@@ -343,7 +353,11 @@
             var RelClass = resolveRelClass(this.embeddings[key]);
             var current = this.relatedObjects[key];
 
-            if(value && value !== current) {
+            if(options.unset) {
+
+                delete this.relatedObjects[key];
+
+            } else if(value && value !== current) {
 
                 if(value._representsToMany || value._representsToOne) {
                     // a model object is directly assigned
@@ -372,10 +386,6 @@
                 this.relatedObjects[key] = value;
             }
 
-            if(options.unset) {
-                delete this.relatedObjects[key];
-            }
-
             if(current !== this.relatedObjects[key]) {
                 changes.push(key);
 
@@ -399,7 +409,10 @@
             var current = this.relatedObjects[key],
                 currentId = this.attributes[idRef];
 
-            if(value!==undefined && value!==null) {
+            if(options.unset) {
+                delete this.relatedObjects[key];
+                delete this.attributes[idRef];
+            } else if(value!==undefined && value!==null) {
                 if(RelClass.prototype._representsToOne) {
                     // handling to-one relation
                     this._setToOneReference(key, RelClass, value, options);
@@ -413,12 +426,6 @@
                 this.relatedObjects[key] = value;
                 this.attributes[idRef] = value;
             }
-
-            if(options.unset) {
-                delete this.relatedObjects[key];
-                delete this.attributes[idRef];
-            }
-
 
             if(!_.isEqual(currentId, this.attributes[idRef])) {
                 changes.push(idRef);

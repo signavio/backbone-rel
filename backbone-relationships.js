@@ -280,7 +280,7 @@
 
             // For each `set` attribute, update or delete the current value.
             for (attr in attrs) {
-                
+
                 val = attrs[attr];
 
                 if(this.embeddings[attr]) {
@@ -336,7 +336,7 @@
             this._changing = false;
 
             // Trigger original 'deepchange' event, which will be propagated through the related object graph
-            if(changes.length && !_.contains(this._deepChangePropagatedFor, nestedOptions.setOriginId)) {
+            if(!silent && changes.length && !_.contains(this._deepChangePropagatedFor, nestedOptions.setOriginId)) {
                 this._deepChangePropagatedFor.push(nestedOptions.setOriginId);
                 this.trigger('deepchange', this, _.extend({ setOriginId: nestedOptions.setOriginId }, options));
                 this.trigger('deepchange_propagated', this, _.extend({ setOriginId: nestedOptions.setOriginId }, options));

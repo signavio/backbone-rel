@@ -36,7 +36,7 @@
                 if(!resolvedClass.prototype._representsToOne && !resolvedClass.prototype._representsToMany) {
                     throw new Error("The model class for the relation could not be resolved. " +
                         "It must extend either Backbone.Model or Backbone.Collection and the " +
-                        "backbone-relationships extension must be loaded");
+                        "backbone-relations extension must be loaded");
                 }
                 return resolvedClass;
             }

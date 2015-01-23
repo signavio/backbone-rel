@@ -2,9 +2,9 @@ define(function(require) {
     "use strict";
 
     var _ = require("underscore"),
-        Backbone = require("backbone-relationships"),
+        Backbone = require("backbone-relations"),
         React = require("react"),
-        BackboneMixin = require("backbone-react-mixin"),
+        BackboneMixin = require("react-mixin"),
         TestUtils = React.addons.TestUtils;
 
     describe("BackboneMixin", function() {
@@ -14,7 +14,8 @@ define(function(require) {
                 embeddedModel: function() { return EmbeddedModel; },
                 embeddedCollection: function() { return EmbeddedCollection; }
             },
-            url: function() { return FIXTURES_BASE + "backbone-relationships/a_" + this.id + ".json"; } // override for using fixtures
+            url: function() { return FIXTURES_BASE + "a_" + this.id + ".json"; }, // override for using fixtures,
+            autoFetchRelated: false
         });
 
         var EmbeddedModel = Backbone.Model.extend({
@@ -26,14 +27,14 @@ define(function(require) {
             model: EmbeddedModel
         });
 
-        var SimpleComponent = React.createFactory(React.createClass({
+        var SimpleComponent = React.createClass({
             mixins: [ BackboneMixin ],
             render: function() {
                 return React.createElement("h2", null, this.props.model.get("title"));
             }
-        }));
+        });
 
-        var CompositeComponent = React.createFactory(React.createClass({
+        var CompositeComponent = React.createClass({
             mixins: [ BackboneMixin ],
             render: function() {
                 return React.createElement("div", null,
@@ -41,17 +42,15 @@ define(function(require) {
                     SimpleComponent({ model : this.props.model.get("embeddedModel"), ref: "child" })
                 );
             }
-        }));
-
-
+        });
 
 
         it("should update the component when the bound model triggers 'deepchange'", function() {
             var a = new A({ id: 1, title: "a1"});
             var c = TestUtils.renderIntoDocument(
-                SimpleComponent({ model: a })
+                React.createElement(SimpleComponent, { model: a })
             );
-            expect(c).have.textComponent("a1");
+            expect(c).to.have.textComponent("a1");
 
             a.set("title", "a1_changed");
             expect(c).to.have.textComponent("a1_changed");
@@ -67,7 +66,7 @@ define(function(require) {
                 }
             });
             var comp = TestUtils.renderIntoDocument(
-                CompositeComponent({ model: a })
+                React.createElement(CompositeComponent, { model: a })
             );
             var childComp = comp.refs.child;
             sinon.spy(comp, "render");
@@ -89,7 +88,7 @@ define(function(require) {
         it("should stop listening when the component unmounts", function() {
             var a = new A({ id: 1, title: "a1"});
             var c = TestUtils.renderIntoDocument(
-                SimpleComponent({ model: a })
+                React.createElement(SimpleComponent, { model: a })
             );
             React.unmountComponentAtNode(c.getDOMNode().parentNode);
 
@@ -109,7 +108,7 @@ define(function(require) {
                 }
             });
             var comp = TestUtils.renderIntoDocument(
-                CompositeComponent({ model: a })
+                React.createElement(CompositeComponent, { model: a })
             );
             var childComp = comp.refs.child;
             sinon.spy(comp, "render");

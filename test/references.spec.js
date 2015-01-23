@@ -1,8 +1,8 @@
-define(["underscore", "backbone-relationships"], function(_, Backbone) {//define(function(require) {
+define(function(require) {
     "use strict";
 
-    //var _ = require("underscore"),
-    //    Backbone = require("backbone-relationships");
+    var _ = require("underscore"),
+        Backbone = require("backbone-relations");
 
     /**
      * Factory method for a callback for synchronizing sub-goals
@@ -35,12 +35,12 @@ define(["underscore", "backbone-relationships"], function(_, Backbone) {//define
             embeddedCollection: function() { return EmbeddedCollection; }
         },
         autoFetchRelated: [ "oneC" ],
-        url: function() { return FIXTURES_BASE + "backbone-relationships/a_" + this.id + ".json"; } // override for using fixtures
+        url: function() { return FIXTURES_BASE + "a_" + this.id + ".json"; } // override for using fixtures
     });
 
     var ACollection = Backbone.Collection.extend({
         model: A,
-        url: FIXTURES_BASE + "backbone-relationships/a_collection.json"
+        url: FIXTURES_BASE + "a_collection.json"
     });
 
     var B = Backbone.Model.extend({
@@ -53,7 +53,7 @@ define(["underscore", "backbone-relationships"], function(_, Backbone) {//define
             manyAs: []
         },
         autoFetchRelated: [ "oneA", "manyAs", "oneC" ],
-        url: function() { return FIXTURES_BASE + "backbone-relationships/b_" + this.id + ".json"; } // override for using fixtures
+        url: function() { return FIXTURES_BASE + "b_" + this.id + ".json"; } // override for using fixtures
     });
 
     var C = Backbone.Model.extend({
@@ -61,7 +61,7 @@ define(["underscore", "backbone-relationships"], function(_, Backbone) {//define
             oneB   : B
         },
         autoFetchRelated: [ "oneB" ],
-        url: function() { return FIXTURES_BASE + "backbone-relationships/c_" + this.id + ".json"; } // override for using fixtures
+        url: function() { return FIXTURES_BASE + "c_" + this.id + ".json"; } // override for using fixtures
     });
 
     var EmbeddedModel = Backbone.Model.extend({
@@ -99,7 +99,7 @@ define(["underscore", "backbone-relationships"], function(_, Backbone) {//define
 
             it("should auto-fetch embeddings", function() {
                 var e = new EmbeddedModel({ id: 1 });
-                e.url = FIXTURES_BASE + "backbone-relationships/embedded_model.json";
+                e.url = FIXTURES_BASE + "embedded_model.json";
                 sinon.spy(e, 'fetch');
 
                 var AWithEmbeddedAutoFetch = A.extend({
@@ -254,7 +254,7 @@ define(["underscore", "backbone-relationships"], function(_, Backbone) {//define
             it("should merge side-loaded attribute data into existing referenced objects", function(done) {
                 var a = new A({id:1});
                 var b = new B({id: 1, manyAs: [a]});
-                b.url = FIXTURES_BASE + "backbone-relationships/b_1_sideloading.json";
+                b.url = FIXTURES_BASE + "b_1_sideloading.json";
                 b.on("error", function(model, resp, opts) { done(new Error("fetch failed: " + resp.status)); });
                 b.fetch();
                 b.once("deepsync", function() {
@@ -267,7 +267,7 @@ define(["underscore", "backbone-relationships"], function(_, Backbone) {//define
 
             it("should support side-loading of referenced objects", function(done) {
                 var b = new B();
-                b.url = FIXTURES_BASE + "backbone-relationships/b_1_sideloading.json";
+                b.url = FIXTURES_BASE + "b_1_sideloading.json";
                 b.fetch();
                 b.once("sync", function() {
                     expect(b.get("oneA"))
@@ -611,7 +611,7 @@ define(["underscore", "backbone-relationships"], function(_, Backbone) {//define
 
         });
 
-        describe('#Events', function() {
+        describe('Events', function() {
 
             it("should trigger change:referenceId when the ID ref changes", function(done) {
                 var a1 = new A({id:1});
@@ -683,7 +683,7 @@ define(["underscore", "backbone-relationships"], function(_, Backbone) {//define
 
             it("should also trigger 'deepsync' in the case that all referenced objects are side-loaded", function(done) {
                 var b = new B();
-                b.url = FIXTURES_BASE + "backbone-relationships/b_1_sideloading.json";
+                b.url = FIXTURES_BASE + "b_1_sideloading.json";
                 b.fetch();
                 b.once("deepsync", function() {
                     done();
@@ -870,7 +870,7 @@ define(["underscore", "backbone-relationships"], function(_, Backbone) {//define
                 var CNoAutoFetch = C.extend({ autoFetchRelated: false });
                 var CCollection = Backbone.Collection.extend({
                     model: CNoAutoFetch,
-                    url: FIXTURES_BASE + "backbone-relationships/a_collection.json"
+                    url: FIXTURES_BASE + "a_collection.json"
                 });
                 var col = new CCollection();
                 col.fetch();

@@ -1,8 +1,8 @@
 define(function(require) {
     "use strict";
 
-    var Backbone = require("backbone-uniquemodel");
-    require("backbone-relationships");
+    var Backbone = require("backbone-relations");
+    require("backbone-uniquemodel"); // Attaches UniqueModel to Backbone global
 
     var flushModelCache = function(modelName) {
         var cache = Backbone.UniqueModel.getModelCache(modelName);
@@ -16,12 +16,12 @@ define(function(require) {
         this.timeout(4000); // wait a max time of 4s for async requests
 
         var A = Backbone.UniqueModel(Backbone.Model.extend({
-            url: function() { return FIXTURES_BASE + "backbone-relationships/a_" + this.id + ".json"; }
+            url: function() { return FIXTURES_BASE + "a_" + this.id + ".json"; }
         }), "A");
 
         var ACollection = Backbone.Collection.extend({
             model: A,
-            url: FIXTURES_BASE + "backbone-relationships/a_collection.json"
+            url: FIXTURES_BASE + "a_collection.json"
         });
 
         var B = Backbone.UniqueModel(Backbone.Model.extend({
@@ -31,7 +31,7 @@ define(function(require) {
                 oneC   : function() { return C; },
                 manyCs : function() { return CCollection; }
             },
-            url: function() { return FIXTURES_BASE + "backbone-relationships/b_" + this.id + ".json"; }
+            url: function() { return FIXTURES_BASE + "b_" + this.id + ".json"; }
         }), "B");
 
         var C = Backbone.UniqueModel(Backbone.Model.extend({
@@ -40,7 +40,7 @@ define(function(require) {
                 children: function() { return CCollection; },
                 parent  : function() { return C; }
             },
-            url: function() { return FIXTURES_BASE + "backbone-relationships/c_" + this.id + ".json"; }
+            url: function() { return FIXTURES_BASE + "c_" + this.id + ".json"; }
         }), "C");
 
         var CCollection = Backbone.Collection.extend({
@@ -193,7 +193,7 @@ define(function(require) {
                     c2 = new C({id:2});
                 sinon.spy(b, 'fetch');
                 sinon.spy(c1, 'fetch');
-                b.url = FIXTURES_BASE + "backbone-relationships/b_3_sideloading.json";
+                b.url = FIXTURES_BASE + "b_3_sideloading.json";
                 b.fetch();
                 b.once("deepsync", function() {
                     expect(b.fetch).to.have.been.calledOnce;
@@ -209,7 +209,7 @@ define(function(require) {
                 var c1 = new C({id:1}),
                     c2 = new C({id:2});
                 sinon.spy(c2, 'fetch');
-                b.url = FIXTURES_BASE + "backbone-relationships/b_3_sideloading.json";
+                b.url = FIXTURES_BASE + "b_3_sideloading.json";
                 b.fetch();
                 b.once("deepsync", function() {
                     expect(c2.fetch).to.have.been.calledOnce;
@@ -225,7 +225,7 @@ define(function(require) {
                 sinon.spy(b, 'fetch');
                 sinon.spy(c1, 'fetch');
                 sinon.spy(c2, 'fetch');
-                b.url = FIXTURES_BASE + "backbone-relationships/b_4_sideloading.json";
+                b.url = FIXTURES_BASE + "b_4_sideloading.json";
                 b.fetch();
                 b.once("deepsync", function() {
                     expect(b.fetch).to.have.been.calledOnce;

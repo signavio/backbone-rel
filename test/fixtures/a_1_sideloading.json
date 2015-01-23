@@ -1,0 +1,8 @@
+{
+    "id": 1,
+    "title": "a1",
+    "embeddedModel" : {
+        "id": 1,
+        "title": "embedded_1"
+    }
+}

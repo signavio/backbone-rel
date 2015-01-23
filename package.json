@@ -1,0 +1,46 @@
+{
+  "name": "backbone-relations",
+  "description": "Relationships between Backbone models in the flavor of MongoDB's document references and embeddings",
+  "keywords": [
+    "backbone",
+    "extension",
+    "relations",
+    "relationships",
+    "embeddings",
+    "references"
+  ],
+  "author": "Jan-Felix Schwarz",
+  "dependencies": {
+    "underscore": ">=1.5.0",
+    "backbone": ">=1.1.2"
+  },
+  "devDependencies": {
+    "docco": "0.6.3",
+    "karma": "~0.12.31",
+    "mocha": "~2.1.0",
+    "karma-mocha": "~0.1.10",
+    "requirejs": "~2.1.15",
+    "karma-requirejs": "~0.2.2",
+    "karma-phantomjs-launcher": "~0.1.4",
+    "jquery": "~2.1.3",
+    "chai": "~1.10.0",
+    "sinon": "~1.12.2",
+    "sinon-chai": "~2.6.0",
+    "chai-react": "~1.0.1",
+    "uglify-js": "~2.4.16",
+    "react": "~0.12.2",
+    "backbone.uniquemodel": "~0.9.0"
+  },
+  "scripts": {
+    "test": "./node_modules/karma/bin/karma start karma.conf.js",
+    "build": "./node_modules/uglify-js/bin/uglifyjs backbone-relations.js --mangle --source-map backbone-relations-min.js.map -o backbone-relations-min.js",
+    "doc": "./node_modules/docco/bin/docco backbone-relations.js"
+  },
+  "main": "backbone-relations.js",
+  "version": "0.9.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/effektif/backbone-relations.git"
+  }
+}

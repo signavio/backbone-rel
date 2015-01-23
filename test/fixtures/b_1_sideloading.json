@@ -1,0 +1,23 @@
+{
+    "id": 1,
+    "oneAId": 1,
+    "manyAIds": [1, 2, 3],
+    "oneA": {
+        "id": 1,
+        "title": "a1_s"
+    },
+    "manyAs": [
+        {
+            "id": 1,
+            "title": "a1_s"
+        },
+        {
+            "id": 2,
+            "title": "a2_s"
+        },
+        {
+            "id": 3,
+            "title": "a3_s"
+        }
+    ]
+}

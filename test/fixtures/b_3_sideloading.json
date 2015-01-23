@@ -1,0 +1,12 @@
+{
+    "id": 3,
+    "manyAIds": [],
+    "oneCId": 1,
+    "manyCIds": [1, 2],
+    "oneC": {
+        "id": 1,
+        "title": "c1",
+        "childrenIds": [1, 2],
+        "parentId": 1
+    }
+}

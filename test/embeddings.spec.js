@@ -1,8 +1,8 @@
-define(["underscore", "backbone-relationships"], function(_, Backbone) {//define(function(require) {
+define(function(require) {
     "use strict";
 
-    //var _ = require("underscore"),
-    //    Backbone = require("backbone-relationships");
+    var _ = require("underscore"),
+        Backbone = require("backbone-relations");
 
     var A = Backbone.Model.extend({
         embeddings: {
@@ -12,7 +12,7 @@ define(["underscore", "backbone-relationships"], function(_, Backbone) {//define
 
         },
         autoFetchRelated: false,
-        url: function() { return FIXTURES_BASE + "backbone-relationships/a_" + this.id + ".json"; }
+        url: function() { return this.id; }
     });
 
     var EmbeddedModel = Backbone.Model.extend({});
@@ -191,7 +191,7 @@ define(["underscore", "backbone-relationships"], function(_, Backbone) {//define
             it("should auto-fetch embeddings", function() {
 
                 var e = new EmbeddedModel({ id: 1 });
-                e.url = FIXTURES_BASE + "backbone-relationships/embedded_model.json";
+                e.url = FIXTURES_BASE + "embedded_model.json";
 
                 var AWithoutAutoFetch = A.extend({
                     autoFetchRelated: false
@@ -223,7 +223,7 @@ define(["underscore", "backbone-relationships"], function(_, Backbone) {//define
             //        }
             //    });
             //    a.autoFetchRelated = ["embeddedModel"];
-            //    a.url = FIXTURES_BASE + "backbone-relationships/a_1_sideloading.json";
+            //    a.url = FIXTURES_BASE + "a_1_sideloading.json";
             //    var e = a.get("embeddedModel");
             //    sinon.spy(e, 'fetch');
             //    a.fetch();

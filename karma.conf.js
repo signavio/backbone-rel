@@ -11,6 +11,7 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
+      'node_modules/es5-shim/es5-shim.js',
       'node_modules/chai/chai.js',
       'node_modules/sinon/pkg/sinon.js',
       'node_modules/sinon-chai/lib/sinon-chai.js',
@@ -32,14 +33,27 @@ module.exports = function(config) {
       { pattern: 'react-mixin.js', included: false },
       { pattern: "test/*.spec.js", included: false },
       { pattern: "test/fixtures/*.json", included: false }
-      
+
     ],
 
+    preprocessors: {
+      '*.js': ['coverage']
+    },
+
+    coverageReporter: {
+      type : 'cobertura',
+      dir : 'coverage/'
+    },
+
+    junitReporter: {
+      outputFile: "results/test-results.xml",
+      suite: "Backbone Relations"
+    },
 
     // test results reporter to use
     // possible values: 'dots', 'progress'
     // available reporters: https://npmjs.org/browse/keyword/karma-reporter
-    reporters: ['progress'],
+    reporters: ["dots", "coverage", "junit"],
 
 
     // web server port
@@ -61,12 +75,12 @@ module.exports = function(config) {
 
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-    browsers: ['Chrome'],
+    browsers: ['PhantomJS'],
 
 
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits
-    singleRun: false
-    
+    singleRun: true
+
   });
 };

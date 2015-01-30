@@ -12,7 +12,7 @@ define(function(require) {
 
         },
         autoFetchRelated: false,
-        url: function() { return this.id; }
+        url: function() { return this.id ? this.id.toString() : "/"; }
     });
 
     var EmbeddedModel = Backbone.Model.extend({});

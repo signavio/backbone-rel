@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/effektif/backbone-relations.svg?branch=master)](https://travis-ci.org/effektif/backbone-relations)
+
 ## References vs. Embeddings
 
 backbone-relations extends Backbone by two concepts that allow applications to represent relationships between models: references and embeddings. These concepts are inspired by the MongoDB data modeling in terms of embedded and referenced documents (http://docs.mongodb.org/manual/core/data-modeling-introduction/).
@@ -52,7 +54,7 @@ An embedded object lives in its parent.
 ```
 var MetaData = Backbone.Model.extend({});
 
-var CommentCollection = Backbone.Collection.extend({ 
+var CommentCollection = Backbone.Collection.extend({
 	model: Comment
 });
 
@@ -73,7 +75,7 @@ var Post = Backbone.Model.extend({
 
 
 
- 
+
 
 
 

@@ -2,7 +2,7 @@
 
 ## References vs. Embeddings
 
-backbone-relations extends Backbone by two concepts that allow applications to represent relationships between models: references and embeddings. These concepts are inspired by the MongoDB data modeling in terms of embedded and referenced documents (http://docs.mongodb.org/manual/core/data-modeling-introduction/).
+backbone-relations extends Backbone by two concepts that allow applications to model relationships between models: references and embeddings. These concepts are inspired by the MongoDB data modeling in terms of embedded and referenced documents (http://docs.mongodb.org/manual/core/data-modeling-introduction/).
 
 
 
@@ -25,7 +25,7 @@ var Comment = Backbone.Model.extend({
 });
 ```
 
-References work especially well in conjunction with backbone.uniquemodel (https://github.com/disqus/backbone.uniquemodel). If you set up a reference to a model class tracked by backbone.uniquemodel, a referenced model instance will automatically be resolved to the right instance in the unique model cache.
+References work especially well in conjunction with [https://github.com/disqus/backbone.uniquemodel](backbone.uniquemodel). If you set up a reference to a model class tracked by backbone.uniquemodel, a referenced model instance will automatically be resolved to the right instance in the unique model cache.
 
 ```
 var User = UniqueModel( Backbone.Model.extend({}), "User" );

@@ -137,6 +137,9 @@
             this.initialize.apply(this, arguments);
         },
 
+        // Returns the URL for this model
+        //
+        //
         url: function() {
             var base =
                 _.result(this, 'urlRoot') ||
@@ -158,6 +161,8 @@
             throw new Error('Could not build url for the model with ID "' + this.id + '" (URL suffix: "' + suffix + '")');
         },
 
+        // For embedded models, returns the suffix to append to the parent model's URL
+        // for building the URL for the embedded model instance.
         urlSuffix: function() {
             var self = this,
                 parent = this.parent;
@@ -179,6 +184,9 @@
         // Set a hash of model attributes and relations on the object, firing `"change"`. This is
         // the core primitive operation of a model, updating the data and notifying
         // anyone who needs to know about the change in state. The heart of the beast.
+        // ATTENTION: This is a full override of Backbone's default implementation meaning that
+        // it will not call the base class method. If you are using third Backbone extensions that
+        // override #set, make sure that these extend the RelModel class.
         set: function(key, val, options) {
             var attr, attrs, unset, changes, silent, changing, prev, current, referenceKey;
             if(key === null) return this;
@@ -347,6 +355,131 @@
 
             return this;
         },
+
+        // Fetches the related object for each key in the provided keys array
+        // If no keys array is provided, it fetches the related objects for all
+        // relations that have not been synced before
+        fetchRelated: function(keys) {
+            if(!keys) {
+                var embeddingKeys = _.filter(_.keys(this.embeddings), function(key) {
+                    return !this.get(key) || (!this.get(key).isSyncing && !this.get(key).isSynced);
+                }, this);
+                var referencesKeys = _.filter(_.keys(this.references), function(key) {
+                    return this.get(key) && (!this.get(key).isSyncing && !this.get(key).isSynced);
+                }, this);
+
+                keys = _.union(embeddingKeys, referencesKeys);
+            }
+
+            if(_.isString(keys)) {
+                keys = [keys];
+            }
+
+            for(var i=0; i<keys.length; i++) {
+                var key = keys[i];
+
+                if(!this.embeddings[key] && !this.references[key]) {
+                    throw new Error("Invalid relationship key '" + key + "'");
+                }
+
+                // init embeddings
+                if(!this.get(key) && this.embeddings[key]) {
+                    var RelClass = resolveRelClass(this.embeddings[key]);
+                    this.set(key, new RelClass());
+                }
+
+                var relatedObject = this.get(key);
+                if(relatedObject && !relatedObject.isSyncing && !_.contains(this._relatedObjectsToFetch, relatedObject)) {
+                    this._relatedObjectsToFetch.push(relatedObject);
+                }
+            }
+            this._fetchRelatedObjects();
+        },
+
+        // Sets the parent of an embedded object
+        // If the optional keyInParent parameter is omitted, is is automatically detected
+        setParent: function(parent, keyInParent) {
+            var self = this;
+            this.keyInParent = keyInParent || _.find(_.keys(parent.embeddings), function(key) {
+                return parent.get(key) === self;
+            });
+            if(!this.keyInParent) {
+                throw new Error("A key for the embedding in the parent must be specified as it could not be detected automatically.");
+            }
+
+            this.parent = parent;
+            if(this.parent.get(this.keyInParent) !== this) {
+                this.parent.set(this.keyInParent, this);
+            }
+
+            this.trigger("embedded", this, parent, keyInParent);
+        },
+
+        // Override #previous to add support for getting previous values of references and embeddings
+        // in "change" events
+        previous: function(attr) {
+            var result = BackboneBase.Model.prototype.previous.apply(this, arguments);
+            if(result) return result;
+
+            if (attr === null || !this._previousRelatedObjects) return null;
+            return this._previousRelatedObjects[attr];
+        },
+
+        // Override #toJSON to add support for inlining JSON representations of related objects
+        // in the JSON of this model. The related objects to be inlined can be specified via the
+        // `inlineJSON` property or option.
+        toJSON: function(options) {
+            options = options || {};
+            var self = this;
+            var json = BackboneBase.Model.prototype.toJSON.apply(this, arguments);
+
+            var inlineJSON = _.uniq(_.compact(_.flatten(
+                _.union([options.inlineJSON], [this.inlineJSON])
+            )));
+
+            _.each(inlineJSON, function(key) {
+                var obj = self;
+                var path = key.split("."),
+                    nestedJson = json;
+                while(obj && path.length > 0 && _.isFunction(obj.toJSON)) {
+                    key = path.shift();
+                    obj = obj.get(key);
+                    if(obj && _.isFunction(obj.toJSON)) {
+                        // nest JSON represention ob embedded object into the hierarchy
+                        nestedJson[key] = obj.toJSON();
+                        nestedJson = nestedJson[key];
+                    } else if(obj===null) {
+                        // if an embedded object was unset, i.e., set to null, we have to
+                        // notify the server by nesting a null value into the JSON hierarchy
+                        nestedJson[key] = null;
+                    }
+                }
+            });
+            return json;
+        },
+
+        // Override #fetch to add support for auto-fetching of embedded objects
+        fetch: function() {
+            var result = BackboneBase.Model.prototype.fetch.apply(this, arguments);
+            this._autoFetchEmbeddings();
+            return result;
+        },
+
+        // Override #sync to force PUT method when creating embedded models
+        sync: function(method, obj, options) {
+            this._beforeSync();
+            options = wrapOptionsCallbacks(this._afterSyncBeforeSet.bind(this), options);
+            if(this.parent && method === "create") method = "update"; // always PUT embedded models
+            if(options.forceMethod) {
+                method = options.forceMethod;
+            }
+            return BackboneBase.Model.prototype.sync.apply(this, arguments);
+        },
+
+
+        //
+        // PRIVATE METHODS
+        //
 
         _setEmbedding: function(key, value, options, changes) {
 
@@ -688,116 +821,6 @@
             }
         },
 
-        // Sets the parent for an embedded object
-        // If the optional keyInParent parameter is omitted, is is automatically detected
-        setParent: function(parent, keyInParent) {
-            var self = this;
-            this.keyInParent = keyInParent || _.find(_.keys(parent.embeddings), function(key) {
-                return parent.get(key) === self;
-            });
-            if(!this.keyInParent) {
-                throw new Error("A key for the embedding in the parent must be specified as it could not be detected automatically.");
-            }
-
-            this.parent = parent;
-            if(this.parent.get(this.keyInParent) !== this) {
-                this.parent.set(this.keyInParent, this);
-            }
-
-            this.trigger("embedded", this, parent, keyInParent);
-        },
-
-        // Override #previous to add support for getting previous values of references and embeddings
-        // in "change" events
-        previous: function(attr) {
-            var result = BackboneBase.Model.prototype.previous.apply(this, arguments);
-            if(result) return result;
-
-            if (attr === null || !this._previousRelatedObjects) return null;
-            return this._previousRelatedObjects[attr];
-        },
-
-        // Override #toJSON to add support for inlining JSON representations of related objects
-        // in the JSON of this model. The related objects to be inlined can be specified via the
-        // `inlineJSON` property or option.
-        toJSON: function(options) {
-            options = options || {};
-            var self = this;
-            var json = BackboneBase.Model.prototype.toJSON.apply(this, arguments);
-
-            var inlineJSON = _.uniq(_.compact(_.flatten(
-                _.union([options.inlineJSON], [this.inlineJSON])
-            )));
-
-            _.each(inlineJSON, function(key) {
-                var obj = self;
-                var path = key.split("."),
-                    nestedJson = json;
-                while(obj && path.length > 0 && _.isFunction(obj.toJSON)) {
-                    key = path.shift();
-                    obj = obj.get(key);
-                    if(obj && _.isFunction(obj.toJSON)) {
-                        // nest JSON represention ob embedded object into the hierarchy
-                        nestedJson[key] = obj.toJSON();
-                        nestedJson = nestedJson[key];
-                    } else if(obj===null) {
-                        // if an embedded object was unset, i.e., set to null, we have to
-                        // notify the server by nesting a null value into the JSON hierarchy
-                        nestedJson[key] = null;
-                    }
-                }
-            });
-            return json;
-        },
-
-        fetch: function() {
-            var result = BackboneBase.Model.prototype.fetch.apply(this, arguments);
-            this._autoFetchEmbeddings();
-            return result;
-        },
-
-        /**
-         * Fetches the related object for each key in the provided keys array
-         * If no keys array is provided, it fetches the related objects for all
-         * relations that have not been synced before
-         */
-        fetchRelated: function(keys) {
-            if(!keys) {
-                var embeddingKeys = _.filter(_.keys(this.embeddings), function(key) {
-                    return !this.get(key) || (!this.get(key).isSyncing && !this.get(key).isSynced);
-                }, this);
-                var referencesKeys = _.filter(_.keys(this.references), function(key) {
-                    return this.get(key) && (!this.get(key).isSyncing && !this.get(key).isSynced);
-                }, this);
-
-                keys = _.union(embeddingKeys, referencesKeys);
-            }
-
-            if(_.isString(keys)) {
-                keys = [keys];
-            }
-
-            for(var i=0; i<keys.length; i++) {
-                var key = keys[i];
-
-                if(!this.embeddings[key] && !this.references[key]) {
-                    throw new Error("Invalid relationship key '" + key + "'");
-                }
-
-                // init embeddings
-                if(!this.get(key) && this.embeddings[key]) {
-                    var RelClass = resolveRelClass(this.embeddings[key]);
-                    this.set(key, new RelClass());
-                }
-
-                var relatedObject = this.get(key);
-                if(relatedObject && !relatedObject.isSyncing && !_.contains(this._relatedObjectsToFetch, relatedObject)) {
-                    this._relatedObjectsToFetch.push(relatedObject);
-                }
-            }
-            this._fetchRelatedObjects();
-        },
-
         _autoFetchEmbeddings: function(onlyUndefinedEmbeddings) {
             var embeddingsKeys = _.keys(this.embeddings);
             for(var i=0; i<embeddingsKeys.length; i++) {
@@ -818,16 +841,6 @@
                 }
             }
             this._fetchRelatedObjects();
-        },
-
-        sync: function(method, obj, options) {
-            this._beforeSync();
-            options = wrapOptionsCallbacks(this._afterSyncBeforeSet.bind(this), options);
-            if(this.parent && method === "create") method = "update"; // always PUT embedded models
-            if(options.forceMethod) {
-                method = options.forceMethod;
-            }
-            return BackboneBase.Model.prototype.sync.apply(this, arguments);
         },
 
         _beforeSync: function() {
@@ -1009,6 +1022,11 @@
 
             return BackboneBase.Collection.prototype.fetch.apply(this, [options]);
         },
+
+
+        //
+        // PRIVATE METHODS
+        //
 
         _beforeSync: function() {
             this.isSyncing = true;

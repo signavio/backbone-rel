@@ -39,7 +39,7 @@ define(function(require) {
             render: function() {
                 return React.createElement("div", null,
                     React.createElement("h1", null, this.props.model.get("title")),
-                    SimpleComponent({ model : this.props.model.get("embeddedModel"), ref: "child" })
+                    React.createElement(SimpleComponent, { model : this.props.model.get("embeddedModel"), ref: "child" })
                 );
             }
         });

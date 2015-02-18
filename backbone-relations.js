@@ -25,64 +25,14 @@
 
     var Backbone = _.extend({}, BackboneBase);
 
-    // Resolve the model/collection class that is specified for a relation.
-    // Supports lazy resolution when passing in a function.
-    function resolveRelClass(cls) {
-        if(_.isFunction(cls)) {
-            if(cls.prototype._representsToOne || cls.prototype._representsToMany) {
-                return cls;
-            } else {
-                var resolvedClass = cls();
-                if(!resolvedClass.prototype._representsToOne && !resolvedClass.prototype._representsToMany) {
-                    throw new Error("The model class for the relation could not be resolved. " +
-                        "It must extend either Backbone.Model or Backbone.Collection and the " +
-                        "backbone-relations extension must be loaded");
-                }
-                return resolvedClass;
-            }
-        } else {
-            throw new Error("Cannot resolve relation class from " + cls);
-        }
-    }
-
-    // returns the ID reference attribute key for the given reference key
-    // e.g.: "userId" for reference with key "user" with idAttribute "id",
-    // "typeKey" for a reference "type" to a model with idAttribute "key",
-    // "taskIds" for a reference "tasks" to a collection
-    function refKeyToIdRefKey(references, key) {
-        var capitalize = function(string) {
-            return string.charAt(0).toUpperCase() + string.substring(1);
-        };
-        var modelClass = resolveRelClass(references[key]);
-        var idAttribute = modelClass.prototype.idAttribute || "id";
-        if(modelClass.prototype._representsToMany) {
-            return key.replace(/s{0,1}$/, capitalize(idAttribute)+"s");
-        } else {
-            return key + capitalize(idAttribute);
-        }
-    }
-
-    // Wraps the xhr success and error callbacks to hook in additional method invocation
-    function wrapOptionsCallbacks(method, options) {
-        options = options || {};
-        var success = options.success;
-        var error = options.error;
-        options.success = function(resp) {
-            method(options);
-            if(success) success(resp);
-        };
-        options.error = function(resp) {
-            method(options);
-            if(error) error(resp);
-        };
-        return options;
-    }
-
 
     var modelOptions = ['url', 'urlRoot', 'collection'];
 
+
     Backbone.Model = BackboneBase.Model.extend({
+
         references: {},
+
         embeddings: {},
 
         // Property to control whether a related object shall be inlined in this model's JSON representation.
@@ -113,7 +63,9 @@
 
             // handle default values for relations
             var defaults,
-                references = this.references;
+                references = this.references,
+                referenceAttributeName = this.referenceAttributeName.bind(this);
+
             if(options.parse) attrs = this.parse(attrs, options) || {};
 
             if(defaults = _.result(this, 'defaults')) {
@@ -121,7 +73,7 @@
                 _.each(_.keys(references), function(refKey) {
                     // do not set default value for referenced object attribute
                     // if attrs contain a corresponding ID reference
-                    if(refKeyToIdRefKey(references, refKey) in attrs && refKey in defaults) {
+                    if(referenceAttributeName(refKey) in attrs && refKey in defaults) {
                         delete defaults[refKey];
                     }
                 });
@@ -171,6 +123,17 @@
             });
         },
 
+        // For models with references, returns the attribute name under which the IDs of referenced
+        // objects for the given reference key are stored.
+        // Per default, the attribute name is built by using the reference key + the ID attribute of the
+        // referenced model. E.g: "userId" for reference key "user" to a model with ID attribute "id",
+        // "userIds" for a to-many reference.
+        // Override this method to customize the reference attribute naming pattern.
+        referenceAttributeName: function(referenceKey) {
+            var referencedModel = resolveRelClass(this.references[referenceKey]);
+            return refKeyToIdRefKey(referencedModel, referenceKey);
+        },
+
         get: function(attr) {
             if(this.embeddings[attr] || this.references[attr]) {
                 // return related object if the key corresponds to a reference or embedding
@@ -186,7 +149,7 @@
         // anyone who needs to know about the change in state. The heart of the beast.
         // ATTENTION: This is a full override of Backbone's default implementation meaning that
         // it will not call the base class method. If you are using third Backbone extensions that
-        // override #set, make sure that these extend the RelModel class.
+        // override #set, make sure that these extend Backbone-relations' Model class.
         set: function(key, val, options) {
             var attr, attrs, unset, changes, silent, changing, prev, current, referenceKey;
             if(key === null) return this;
@@ -241,7 +204,7 @@
 
             for(i=0; i<refKeys.length; i++) {
                 refAndIdRefKeys[refKeys[i]] = refKeys[i];
-                refAndIdRefKeys[refKeyToIdRefKey(this.references, refKeys[i])] = refKeys[i];
+                refAndIdRefKeys[this.referenceAttributeName(refKeys[i])] = refKeys[i];
             }
 
             var findReferenceKey = function(key) {
@@ -538,7 +501,7 @@
 
         _setReference: function(key, value, options, changes) {
             var RelClass = resolveRelClass(this.references[key]),
-                idRef = refKeyToIdRefKey(this.references, key);
+                idRef = this.referenceAttributeName(key);
             var current = this.relatedObjects[key],
                 currentId = this.attributes[idRef];
 
@@ -814,7 +777,7 @@
 
         _updateIdRef: function(key) {
             if(this.references[key]) {
-                var idRef = refKeyToIdRefKey(this.references, key);
+                var idRef = this.referenceAttributeName(key);
                 this._ensureIdReference(idRef, key);
                 this.trigger("change:" + idRef, this, this.get(idRef), {});
                 this.trigger("change", this, {});
@@ -1074,6 +1037,62 @@
         _representsToMany: true
 
     });
+
+    
+
+    // Resolve the model/collection class that is specified for a relation.
+    // Supports lazy resolution when passing in a function.
+    function resolveRelClass(cls) {
+        if(_.isFunction(cls)) {
+            if(cls.prototype._representsToOne || cls.prototype._representsToMany) {
+                return cls;
+            } else {
+                var resolvedClass = cls();
+                if(!resolvedClass.prototype._representsToOne && !resolvedClass.prototype._representsToMany) {
+                    throw new Error("The model class for the relation could not be resolved. " +
+                        "It must extend either Backbone.Model or Backbone.Collection and the " +
+                        "backbone-relations extension must be loaded");
+                }
+                return resolvedClass;
+            }
+        } else {
+            throw new Error("Cannot resolve relation class from " + cls);
+        }
+    }
+
+    function capitalize(string) {
+        return string.charAt(0).toUpperCase() + string.substring(1);
+    };
+
+    // Returns the ID reference attribute key for the given reference key
+    // e.g.: "userId" for reference with key "user" with idAttribute "id",
+    // "typeKey" for a reference "type" to a model with idAttribute "key",
+    // "taskIds" for a reference "tasks" to a collection
+    function refKeyToIdRefKey(referencedModel, key) {
+        var idAttribute = referencedModel.prototype.idAttribute || "id";
+        if(referencedModel.prototype._representsToMany) {
+            return key.replace(/s{0,1}$/, capitalize(idAttribute)+"s");
+        } else {
+            return key + capitalize(idAttribute);
+        }
+    }
+
+    // Wraps the xhr success and error callbacks to hook in additional method invocation.
+    function wrapOptionsCallbacks(method, options) {
+        options = options || {};
+        var success = options.success;
+        var error = options.error;
+        options.success = function(resp) {
+            method(options);
+            if(success) success(resp);
+        };
+        options.error = function(resp) {
+            method(options);
+            if(error) error(resp);
+        };
+        return options;
+    }
+
 
     _.extend(exports, Backbone);
     return Backbone;

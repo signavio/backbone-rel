@@ -95,6 +95,44 @@ define(function(require) {
                 .to.be.an.instanceof(C);
         });
 
+        it("should be possible to define custom attribute name patterns for ID references", function() {
+            var MyModel = Backbone.Model.extend({
+                references: {
+                    oneA: A
+                },
+                referenceAttributeName: function(refKey) {
+                    return "idFor_" + refKey;
+                }
+            });
+
+            var m = new MyModel({ oneA: new A({ id: "a1" })});
+            expect(m.get("idFor_oneA")).to.equal("a1");
+            expect(m.get("oneAId")).to.not.exist;
+            var json = m.toJSON();
+            expect(json.idFor_oneA).to.equal("a1");
+            expect(json.oneAId).to.not.exist;
+
+        });
+
+        it("should be possible to use the reference name as the attribute name for the ID reference", function() {
+            var MyModel = Backbone.Model.extend({
+                references: {
+                    oneA: A
+                },
+                referenceAttributeName: function(refKey) {
+                    return refKey;
+                }
+            });
+
+            var m = new MyModel({ oneA: "a1" });
+            expect(m.get("oneA")).to.be.an.instanceof(A);
+            expect(m.get("oneA").id).to.equal("a1");
+
+            m.set("oneA", new A({ id: "a2" }));
+            var json = m.toJSON()
+            expect(json.oneA).to.equal("a2");
+        });
+
         describe("#constructor", function() {
 
             it("should auto-fetch embeddings", function() {

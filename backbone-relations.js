@@ -397,7 +397,7 @@
             var json = BackboneBase.Model.prototype.toJSON.apply(this, arguments);
 
             var inlineJSON = _.uniq(_.compact(_.flatten(
-                _.union([options.inlineJSON], [this.inlineJSON])
+                _.union([options.inlineJSON], [_.result(this, "inlineJSON")])
             )));
 
             _.each(inlineJSON, function(key) {

@@ -1,4 +1,6 @@
 [![Build Status](https://travis-ci.org/effektif/backbone-relations.svg?branch=master)](https://travis-ci.org/effektif/backbone-relations)
+[![Dependency Status](https://david-dm.org/effektif/backbone-relations.svg)](https://david-dm.org/effektif/backbone-relations)
+[![devDependency Status](https://david-dm.org/effektif/backbone-relations/dev-status.svg)](https://david-dm.org/effektif/backbone-relations#info=devDependencies)
 
 ## References vs. Embeddings
 

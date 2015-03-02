@@ -233,12 +233,11 @@
                         // ensure that the default is an actual Backbone model/collection
                         // instead of plain JSON hash or array (which would be applyed to the current
                         // referenced objects instead of replacing them)
-                        //if(!defVal._representsToMany && !defVal._representsToOne) {
-                        //    var relationship = this.embeddings[keyToUnset] || this.references[keyToUnset];
-                        //    var RelClass = relationship && resolveRelClass(relationship);
-                        //    if(RelClass) defVal = new RelClass(defVal, nestedOptions);
-                        //    console.log(keyToUnset, defVal);
-                        //}
+                        if(!defVal._representsToMany && !defVal._representsToOne) {
+                           var relationship = this.embeddings[keyToUnset] || this.references[keyToUnset];
+                           var RelClass = relationship && resolveRelClass(relationship);
+                           if(RelClass) defVal = new RelClass(defVal, nestedOptions);
+                        }
 
                         attrs[keyToUnset] = defVal;
                         keysToUnset = _.without(keysToUnset, keyToUnset);
@@ -449,11 +448,11 @@
             var RelClass = resolveRelClass(this.embeddings[key]);
             var current = this.relatedObjects[key];
 
-            if(options.unset) {
-
+            if(options.unset || options.clear) {
                 delete this.relatedObjects[key];
-
-            } else if(value && value !== current) {
+            }
+        
+            if(!options.unset && value && value !== current) {
 
                 if(value._representsToMany || value._representsToOne) {
                     // a model object is directly assigned
@@ -476,7 +475,7 @@
                     }
                 }
 
-            } else {
+            } else if(!options.unset) {
 
                 // set new embedded object or null/undefined
                 this.relatedObjects[key] = value;
@@ -505,10 +504,12 @@
             var current = this.relatedObjects[key],
                 currentId = this.attributes[idRef];
 
-            if(options.unset) {
+            if(options.unset || options.clear) {
                 delete this.relatedObjects[key];
                 delete this.attributes[idRef];
-            } else if(value!==undefined && value!==null) {
+            }
+
+            if(!options.unset && value!==undefined && value!==null) {
                 if(RelClass.prototype._representsToOne) {
                     // handling to-one relation
                     this._setToOneReference(key, RelClass, value, options);
@@ -517,7 +518,7 @@
                     this._setToManyReference(key, RelClass, value, options);
                 }
                 this._ensureIdReference(idRef, key);
-            } else {
+            } else if(!options.unset) {
                 // set `undefined` or `null`
                 this.relatedObjects[key] = value;
                 this.attributes[idRef] = value;

@@ -418,20 +418,20 @@ define(function(require) {
             });
 
             // This most probably is not desirable
-            //it("should leave embeddded objects untouched when clearing", function() {
-            //    var e1 = new EmbeddedModel({ id: 1, title: "e1" });
-            //    var eC = new EmbeddedCollection([{id:2}, {id:3}]);
-//
-            //    var a1 = new A({ id: 1, embeddedModel: e1, embeddedCollection: eC });
-//
-            //    a1.set({ id: 1, embeddedModel: {}, embeddedCollection: [] }, { clear: true });
-//
-            //    expect(a1.get("embeddedModel").get("title")).to.not.exist;
-            //    expect(e1.get("title").to.equal("e1"));
-//
-            //    expect(a1.get("embeddedCollection").models).to.be.empty;
-            //    expect(eC.length).to.equal(2);
-            //});
+            it("should leave embeddded objects untouched when clearing", function() {
+               var e1 = new EmbeddedModel({ id: 1, title: "e1" });
+               var eC = new EmbeddedCollection([{id:2}, {id:3}]);
+
+               var a1 = new A({ id: 1, embeddedModel: e1, embeddedCollection: eC });
+
+               a1.set({ id: 1, embeddedModel: {}, embeddedCollection: [] }, { clear: true });
+
+               expect(a1.get("embeddedModel").get("title")).to.not.exist;
+               expect(e1.get("title")).to.equal("e1");
+
+               expect(a1.get("embeddedCollection").models).to.be.empty;
+               expect(eC.length).to.equal(2);
+            });
 
         });
 

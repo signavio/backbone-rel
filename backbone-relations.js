@@ -233,10 +233,10 @@
                         // reset to default value instead of deleting
                         var defVal = defaults[keyToUnset];
 
-                        // ensure that the default is an actual Backbone model/collection
-                        // instead of plain JSON hash or array (which would be applyed to the current
-                        // referenced objects instead of replacing them)
-                        if(!defVal._representsToMany && !defVal._representsToOne) {
+                        // ensure that the default for a reference/embedding is an actual Backbone 
+                        // model/collection and not just a plain JSON hash or array (which would be 
+                        // applied to the current referenced objects instead of replacing them)
+                        if(defVal && !defVal._representsToMany && !defVal._representsToOne) {
                            var relationship = this.embeddings[keyToUnset] || this.references[keyToUnset];
                            var RelClass = relationship && resolveRelClass(relationship);
                            if(RelClass) defVal = new RelClass(defVal, nestedOptions);

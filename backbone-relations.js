@@ -164,15 +164,18 @@
 
             options || (options = {});
 
-            // pass the setOriginId down to the nested set calls via options
-            var nestedOptions = _.extend({ setOriginId: _.uniqueId() }, options);
+            // Pass the setOriginId down to the nested set calls via options.
+            // Also support `nestedSetOptions` to define options that shall only be applied to nested
+            // #set calls for related object.
+            var nestedOptions = _.extend(
+                { setOriginId: _.uniqueId() }, options, 
+                { clear: undefined },  // `clear` option should not propagate to nested set calls
+                { nestedSetOptions: undefined },
+                options.nestedSetOptions
+            );
             if(nestedOptions.collection) {
                 // `collection` option should not propagate to nested set calls
                 delete nestedOptions.collection;
-            }
-            if(nestedOptions.clear) {
-                // `clear` option should not propagate to nested set calls
-                delete nestedOptions.clear;
             }
 
             this._deepChangePropagatedFor = [];

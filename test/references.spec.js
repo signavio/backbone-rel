@@ -417,7 +417,7 @@ define(function(require) {
                 expect(a1.get("title")).to.equal("a1");
             });
 
-            // This most probably is not desirable
+            // This most probably is not desirable... Or may be it is?
             it("should leave embeddded objects untouched when clearing", function() {
                var e1 = new EmbeddedModel({ id: 1, title: "e1" });
                var eC = new EmbeddedCollection([{id:2}, {id:3}]);

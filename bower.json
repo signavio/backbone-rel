@@ -1,6 +1,6 @@
 {
   "name"          : "backbone-relations",
-  "version"       : "1.0.0",
+  "version"       : "0.9.0",
   "main"          : "backbone-relations.js",
   "dependencies"  : {
     "underscore"  : ">=1.5.0",

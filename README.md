@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.org/effektif/backbone-rel.svg?branch=master)](https://travis-ci.org/effektif/backbone-rel)
 [![Dependency Status](https://david-dm.org/effektif/backbone-rel.svg)](https://david-dm.org/effektif/backbone-rel)
-[![devDependency Status](https://david-dm.org/effektif/backbone-rel/dev-status.svg)](https://david-dm.org/effektif/backbone-rel#info=devDependencies)
+[![npm version](https://badge.fury.io/js/backbone-rel.svg)](http://badge.fury.io/js/backbone-rel)
 
 ## References vs. Embeddings
 

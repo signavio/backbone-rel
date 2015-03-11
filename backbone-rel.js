@@ -149,7 +149,7 @@
         // anyone who needs to know about the change in state. The heart of the beast.
         // ATTENTION: This is a full override of Backbone's default implementation meaning that
         // it will not call the base class method. If you are using third Backbone extensions that
-        // override #set, make sure that these extend Backbone-relations' Model class.
+        // override #set, make sure that these extend backbone-rel' Model class.
         set: function(key, val, options) {
             var attr, attrs, unset, changes, silent, changing, prev, current, referenceKey;
             if(key === null) return this;
@@ -1055,7 +1055,7 @@
                 if(!resolvedClass.prototype._representsToOne && !resolvedClass.prototype._representsToMany) {
                     throw new Error("The model class for the relation could not be resolved. " +
                         "It must extend either Backbone.Model or Backbone.Collection and the " +
-                        "backbone-relations extension must be loaded");
+                        "backbone-rel extension must be loaded");
                 }
                 return resolvedClass;
             }

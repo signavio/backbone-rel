@@ -36,7 +36,7 @@ require.config({
 
   map: {
     "backbone-uniquemodel" : {
-      "backbone" : "backbone-relations"
+      "backbone" : "backbone-rel"
     }
   },
 

@@ -29,7 +29,7 @@ module.exports = function(config) {
       { pattern: 'node_modules/react/dist/react-with-addons.js', included: false },
       { pattern: 'node_modules/backbone.uniquemodel/backbone.uniquemodel.js', included: false },
 
-      { pattern: 'backbone-relations.js', included: false },
+      { pattern: 'backbone-rel.js', included: false },
       { pattern: 'react-mixin.js', included: false },
       { pattern: "test/*.spec.js", included: false },
       { pattern: "test/fixtures/*.json", included: false }

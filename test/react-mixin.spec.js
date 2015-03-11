@@ -2,7 +2,7 @@ define(function(require) {
     "use strict";
 
     var _ = require("underscore"),
-        Backbone = require("backbone-relations"),
+        Backbone = require("backbone-rel"),
         React = require("react"),
         BackboneMixin = require("react-mixin"),
         TestUtils = React.addons.TestUtils;

@@ -1,5 +1,5 @@
 {
-  "name": "backbone-relations",
+  "name": "backbone-rel",
   "description": "Relationships between Backbone models in the flavor of MongoDB's document references and embeddings",
   "keywords": [
     "backbone",
@@ -36,14 +36,14 @@
   },
   "scripts": {
     "test": "./node_modules/karma/bin/karma start karma.conf.js",
-    "build": "./node_modules/uglify-js/bin/uglifyjs backbone-relations.js --mangle --source-map backbone-relations-min.js.map -o backbone-relations-min.js",
-    "doc": "./node_modules/docco/bin/docco backbone-relations.js"
+    "build": "./node_modules/uglify-js/bin/uglifyjs backbone-rel.js --mangle --source-map backbone-rel-min.js.map -o backbone-rel-min.js",
+    "doc": "./node_modules/docco/bin/docco backbone-rel.js"
   },
-  "main": "backbone-relations.js",
+  "main": "backbone-rel.js",
   "version": "0.9.0",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/effektif/backbone-relations.git"
+    "url": "https://github.com/effektif/backbone-rel.git"
   }
 }

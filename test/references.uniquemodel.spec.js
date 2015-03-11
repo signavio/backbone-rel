@@ -1,7 +1,7 @@
 define(function(require) {
     "use strict";
 
-    var Backbone = require("backbone-relations");
+    var Backbone = require("backbone-rel");
     require("backbone-uniquemodel"); // Attaches UniqueModel to Backbone global
 
     var flushModelCache = function(modelName) {

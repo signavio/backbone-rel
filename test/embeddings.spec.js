@@ -2,7 +2,7 @@ define(function(require) {
     "use strict";
 
     var _ = require("underscore"),
-        Backbone = require("backbone-relations");
+        Backbone = require("backbone-rel");
 
     var A = Backbone.Model.extend({
         embeddings: {

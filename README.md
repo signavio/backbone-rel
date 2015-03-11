@@ -1,10 +1,10 @@
-[![Build Status](https://travis-ci.org/effektif/backbone-relations.svg?branch=master)](https://travis-ci.org/effektif/backbone-relations)
-[![Dependency Status](https://david-dm.org/effektif/backbone-relations.svg)](https://david-dm.org/effektif/backbone-relations)
-[![devDependency Status](https://david-dm.org/effektif/backbone-relations/dev-status.svg)](https://david-dm.org/effektif/backbone-relations#info=devDependencies)
+[![Build Status](https://travis-ci.org/effektif/backbone-rel.svg?branch=master)](https://travis-ci.org/effektif/backbone-rel)
+[![Dependency Status](https://david-dm.org/effektif/backbone-rel.svg)](https://david-dm.org/effektif/backbone-rel)
+[![devDependency Status](https://david-dm.org/effektif/backbone-rel/dev-status.svg)](https://david-dm.org/effektif/backbone-rel#info=devDependencies)
 
 ## References vs. Embeddings
 
-backbone-relations extends Backbone by two concepts that allow applications to model relationships between models: references and embeddings. These concepts are inspired by the MongoDB data modeling in terms of embedded and referenced documents (http://docs.mongodb.org/manual/core/data-modeling-introduction/).
+backbone-rel extends Backbone by two concepts that allow applications to model relationships between models: references and embeddings. These concepts are inspired by the MongoDB data modeling in terms of embedded and referenced documents (http://docs.mongodb.org/manual/core/data-modeling-introduction/).
 
 
 

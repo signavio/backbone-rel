@@ -50,6 +50,10 @@
         return true;
     }
 
+    function isTopLevel(component) {
+        return component._reactInternalInstance._isTopLevel;
+    }
+
 
     var mixin = {
 
@@ -140,7 +144,7 @@
 
         _handleDeepChangePropagated: function() {
             if(!this.isMounted()) return;
-            if(this._mountDepth === 0) {
+            if(isTopLevel(this)) {
                 // at the root component, trigger update of the component tree
                 this.setProps(this.props);
             }

@@ -25,6 +25,7 @@ require.config({
     "backbone" : "node_modules/backbone/backbone",
     "jquery" : "node_modules/jquery/dist/jquery",
     "react" : "node_modules/react/dist/react-with-addons",
+    "rquery" : "node_modules/rquery/rquery",
     "backbone-uniquemodel" : "node_modules/backbone.uniquemodel/backbone.uniquemodel"
   },
 
@@ -37,6 +38,9 @@ require.config({
   map: {
     "backbone-uniquemodel" : {
       "backbone" : "backbone-rel"
+    },
+    "rquery" : {
+      "lodash" : "node_modules/rquery/node_modules/lodash/index"
     }
   },
 

@@ -5,6 +5,7 @@ define(function(require) {
         Backbone = require("backbone-rel"),
         React = require("react"),
         BackboneMixin = require("react-mixin"),
+        $R = require('rquery'),
         TestUtils = React.addons.TestUtils;
 
     describe("BackboneMixin", function() {
@@ -50,10 +51,11 @@ define(function(require) {
             var c = TestUtils.renderIntoDocument(
                 React.createElement(SimpleComponent, { model: a })
             );
-            expect(c).to.have.textComponent("a1");
+            var $r = $R(c);
+            expect($r.text()).to.equal("a1");
 
             a.set("title", "a1_changed");
-            expect(c).to.have.textComponent("a1_changed");
+            expect($r.text()).to.equal("a1_changed");
         });
 
         it("should update each component in the component tree only once for each 'deepchange' event", function() {
@@ -81,8 +83,8 @@ define(function(require) {
 
             expect(comp.render).to.have.been.calledOnce;
             expect(childComp.render).to.have.been.calledOnce;
-            expect(comp).to.have.textComponent("a1_changed");
-            expect(childComp).to.have.textComponent("e1_changed");
+            expect($R(comp).find("h1").text()).to.equal("a1_changed");
+            expect($R(childComp).text()).to.equal("e1_changed");
         });
 
         it("should stop listening when the component unmounts", function() {

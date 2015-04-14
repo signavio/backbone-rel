@@ -1,6 +1,6 @@
 {
   "name"          : "backbone-rel",
-  "version"       : "0.9.0",
+  "version"       : "0.10.0",
   "main"          : "backbone-rel.js",
   "dependencies"  : {
     "underscore"  : ">=1.5.0",

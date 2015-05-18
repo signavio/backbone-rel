@@ -100,8 +100,17 @@
                 if(_.contains(keysForBackboneProps, key)) return;
                 prop = this.props[key];
                 if(prop instanceof Backbone.Model || prop instanceof Backbone.Collection) {
-                    prop.off("deepchange", this._handleDeepChange, this);
-                    prop.off("deepchange_propagated", this._handleDeepChangePropagatedThrottled, this);
+                    this.stopReacting(prop);
+                }
+            }
+        },
+
+        componentWillUnmount: function() {
+            // stop listening to all props
+            for(key in this.props) {
+                prop = this.props[key];
+                if(prop instanceof Backbone.Model || prop instanceof Backbone.Collection) {
+                    this.stopReacting(prop);
                 }
             }
         },

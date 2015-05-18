@@ -41,7 +41,7 @@
     "doc": "./node_modules/docco/bin/docco backbone-rel.js"
   },
   "main": "backbone-rel.js",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "license": "MIT",
   "repository": {
     "type": "git",

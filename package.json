@@ -36,9 +36,9 @@
     "uglify-js": "~2.4.16"
   },
   "scripts": {
-    "test": "./node_modules/karma/bin/karma start karma.conf.js",
-    "build": "./node_modules/uglify-js/bin/uglifyjs backbone-rel.js --mangle --source-map backbone-rel-min.js.map -o backbone-rel-min.js",
-    "doc": "./node_modules/docco/bin/docco backbone-rel.js"
+    "test": "karma start karma.conf.js",
+    "build": "uglifyjs backbone-rel.js --mangle --source-map backbone-rel-min.js.map -o backbone-rel-min.js",
+    "doc": "docco backbone-rel.js"
   },
   "main": "backbone-rel.js",
   "version": "0.10.1",

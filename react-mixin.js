@@ -21,7 +21,6 @@
 
 }(this, function(root, _, Backbone) {
 
-
     /**
      * Performs equality by iterating through keys on an object and returning
      * false when any key has values which are not strictly equal between
@@ -48,10 +47,6 @@
             }
         }
         return true;
-    }
-
-    function isTopLevel(component) {
-        return component._reactInternalInstance._isTopLevel;
     }
 
 
@@ -120,12 +115,6 @@
          * to keep the component updated
          */
         reactTo: function(modelOrCollection, key) {
-            if (!this._handleDeepChangePropagatedThrottled) {
-                this._handleDeepChangePropagatedThrottled = _.throttle(this._handleDeepChangePropagated, 1);
-            }
-            if (!this._handleForceUpdateEventThrottled) {
-                this._handleForceUpdateEventThrottled = _.throttle(this._handleForceUpdateEvent, 1);
-            }
 
             if(key && this.props[key]) {
                 if(this.props[key] === modelOrCollection) {
@@ -136,14 +125,14 @@
             }
 
             modelOrCollection.on("deepchange", this._handleDeepChange, this);
-            modelOrCollection.on("deepchange_propagated", this._handleDeepChangePropagatedThrottled, this);
-            modelOrCollection.on("forceUpdate", this._handleForceUpdateEventThrottled, this);
+            modelOrCollection.on("deepchange_propagated", this._callForceUpdate, this);
+            modelOrCollection.on("forceUpdate", this._callForceUpdate, this);
         },
 
         stopReacting: function(modelOrCollection) {
             modelOrCollection.off("deepchange", this._handleDeepChange, this);
-            modelOrCollection.off("deepchange_propagated", this._handleDeepChangePropagatedThrottled, this);
-            modelOrCollection.off("forceUpdate", this._handleForceUpdateEventThrottled, this);
+            modelOrCollection.off("deepchange_propagated", this._callForceUpdate, this);
+            modelOrCollection.off("forceUpdate", this._callForceUpdate, this);
         },
 
         _handleDeepChange: function() {
@@ -151,15 +140,7 @@
             this._needsUpdate = true;
         },
 
-        _handleDeepChangePropagated: function() {
-            if(!this.isMounted()) return;
-            if(isTopLevel(this)) {
-                // at the root component, trigger update of the component tree
-                this.setProps(this.props);
-            }
-        },
-
-        _handleForceUpdateEvent: function() {
+        _callForceUpdate: function () {
             if(!this.isMounted()) return;
             this.forceUpdate();
         },

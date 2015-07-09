@@ -52,6 +52,8 @@
 
     var mixin = {
 
+        _isBackboneBound: true,
+
         shouldComponentUpdate: function(nextProps, nextState) {
             if(this.shouldComponentUpdateOverride) {
                 return this.shouldComponentUpdateOverride.apply(null, arguments);
@@ -125,14 +127,14 @@
             }
 
             modelOrCollection.on("deepchange", this._handleDeepChange, this);
-            modelOrCollection.on("deepchange_propagated", this._callForceUpdate, this);
-            modelOrCollection.on("forceUpdate", this._callForceUpdate, this);
+            modelOrCollection.on("deepchange_propagated", this._handleDeepChangePropagated, this);
+            modelOrCollection.on("forceUpdate", this._handleForceUpdate, this);
         },
 
         stopReacting: function(modelOrCollection) {
             modelOrCollection.off("deepchange", this._handleDeepChange, this);
-            modelOrCollection.off("deepchange_propagated", this._callForceUpdate, this);
-            modelOrCollection.off("forceUpdate", this._callForceUpdate, this);
+            modelOrCollection.off("deepchange_propagated", this._handleDeepChangePropagated, this);
+            modelOrCollection.off("forceUpdate", this._handleForceUpdate, this);
         },
 
         _handleDeepChange: function() {
@@ -140,9 +142,19 @@
             this._needsUpdate = true;
         },
 
-        _callForceUpdate: function () {
+        _handleDeepChangePropagated: function () {
+            if(!this.isMounted() || this.hasBackboneBoundOwner()) return;
+            this.forceUpdate();
+        },
+
+        _handleForceUpdate: function () {
             if(!this.isMounted()) return;
             this.forceUpdate();
+        },
+
+        hasBackboneBoundOwner: function() {
+            var owner = this._reactInternalInstance._currentElement._owner;
+            return owner && owner._instance._isBackboneBound;
         },
 
         /**

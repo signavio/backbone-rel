@@ -232,32 +232,6 @@ define(function(require) {
                 expect(b.toJSON().manyAIds).to.deep.equal([1, 2]);
             });
 
-            //it("should trigger 'change:{embeddingKey}' when the ID of the embedded object changed", function() {
-            //    var e1 = new EmbeddedModel({id: 1});
-            //    var a = new A({id:1, embeddedModel: e1});
-//
-            //    var spy = {
-            //        onChange: function() {}
-            //    };
-            //    sinon.spy(spy, "onChange");
-            //    a.on("change:embeddedModel", spy.onChange);
-            //    a.set("embeddedModel", {id: 2});
-            //    expect(spy.onChange).to.have.been.calledOnce;
-            //});
-
-            //it("should trigger 'change:relation' when setting an embedded object with no ID", function() {
-            //    var e = new EmbeddedModel({title: "embedded_1"});
-            //    var a = new A({id:1, embeddedModel: e});
-//
-            //    var spy = {
-            //        onChange: function() {}
-            //    };
-            //    sinon.spy(spy, "onChange");
-            //    a.on("change:embeddedModel", spy.onChange);
-            //    a.set("embeddedModel", { title: "embedded_1_changed" });
-            //    expect(spy.onChange).to.have.been.calledOnce;
-            //});
-
             it("should fetch the new referenced object for to-one relations", function(done) {
                 var b = new B({id: 1});
                 b.fetch();
@@ -470,6 +444,34 @@ define(function(require) {
                 expect(a.get("description")).to.equal("desc");
 
                 server.restore();
+            });
+
+        });
+
+        describe('#parse', function () {
+
+            it('should be called once for a to-one reference with side-loading when the parent model is set with parse option', function () {
+                var b = new B({
+                    oneA: {
+                        title: "new_a"
+                    }
+                });
+                var oneA = b.get("oneA");
+                sinon.spy(oneA, "parse");
+                b.set({
+                    oneA: {
+                        title: "new_a"
+                    }
+                }, { parse: true });
+                expect(oneA.parse).to.have.been.calledOnce;
+            });
+            
+            it('should also be called only once for each item in a to-many side-loading with parse option', function () { 
+                var b1 = new B({id:1, manyAs: [ { id: 1 } ]});
+                var a1 = b1.get("manyAs").get(1);
+                sinon.spy(a1, "parse");
+                b1.set({ manyAs: [ { id: 1 } ] }, { parse: true });
+                expect(a1.parse).to.have.been.calledOnce;
             });
 
         });

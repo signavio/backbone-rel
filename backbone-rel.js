@@ -474,6 +474,9 @@
                     if(this.relatedObjects[key]._representsToMany) {
                         this.relatedObjects[key][options.reset ? 'reset' : 'set'](value, options);
                     } else {
+                        if(options.parse) {
+                            value = this.relatedObjects[key].parse(value, options);
+                        }
                         this.relatedObjects[key].set(value, options);
                     }
                 }
@@ -613,6 +616,9 @@
                 // create/update the related model instance
 
                 if(relatedObject) {
+                    if(options.parse) {
+                        value = relatedObject.parse(value, options);
+                    }
                     relatedObject.set(value, options);
                 } else {
                     relatedObject = new RelClass(value, options);
@@ -701,9 +707,12 @@
                     // if the related model data is sideloaded,
                     // create/update the related model instance
                     if(item) {
+                        if(options.parse) {
+                            itemData = item.parse(itemData, options);
+                        }
                         item.set(itemData, options);
                     } else {
-                        item = new ItemModel(itemData);
+                        item = new ItemModel(itemData, options);
                     }
 
                     item.isSynced = true;
@@ -719,7 +728,7 @@
                     if(!item) {
                         var attrs = {};
                         attrs[ItemModel.prototype.idAttribute||"id"] = id;
-                        item = new ItemModel(attrs, options);
+                        item = new ItemModel(attrs, _.extend({}, options, { parse: undefined }));
 
                         // auto-fetch related model if its url can be built
                         var autoFetch = this.autoFetchRelated === true ||

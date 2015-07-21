@@ -260,6 +260,42 @@ define(function(require) {
 
         });
 
+        describe('#parse', function () {
+
+            it('should be called once for an embedding when the parent model is set with parse option', function () {
+                var a = new A({ id: 1, embeddedModel: { title: "title" }});
+                var e = a.get("embeddedModel");
+                sinon.spy(e, "parse");
+                a.set({ id: 1, embeddedModel: { title: "title" }}, { parse: true });
+                expect(e.parse).to.have.been.calledOnce;
+            });
+
+            it('should also be called just once when embedded in a collection and setting the parent model with parse option', function () {
+                var a = new A({
+                    id: 1,
+                    embeddedCollection: [
+                        {   
+                            id: 1,
+                            title: "embedded_1"
+                        }
+                    ]
+                });
+                var e1 = a.get("embeddedCollection").get(1);
+                sinon.spy(e1, "parse");
+                a.set({
+                    id: 1,
+                    embeddedCollection: [
+                        {   
+                            id: 1,
+                            title: "embedded_1"
+                        }
+                    ]
+                }, { parse: true });
+                expect(e1.parse).to.have.been.calledOnce;
+            });
+
+        });
+
     });
 
     describe("Collection", function() {

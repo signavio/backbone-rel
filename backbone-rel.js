@@ -923,9 +923,9 @@
             this.on('reset', function(collection, options) {
                 triggerOriginalDeepChange(options);
             });
-            //this.on('sort', function(collection, options) {
-            //    triggerOriginalDeepChange(options);
-            //});
+            this.on('sort', function(collection, options) {
+               triggerOriginalDeepChange(options);
+            });
 
             return BackboneBase.Collection.prototype.constructor.apply(this, arguments);
         },

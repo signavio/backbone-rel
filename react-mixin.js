@@ -54,14 +54,15 @@
 
         _isBackboneBound: true,
 
-        shouldComponentUpdate: function(nextProps, nextState) {
+        shouldComponentUpdate: function(nextProps, nextState, nextContext) {
             if(this.shouldComponentUpdateOverride) {
                 return this.shouldComponentUpdateOverride.apply(null, arguments);
             }
 
             return this._needsUpdate ||
                    !shallowEqual(this.props, nextProps) ||
-                   !shallowEqual(this.state, nextState);
+                   !shallowEqual(this.state, nextState) ||
+                   !shallowEqual(this.context, nextContext);
         },
 
         componentWillUpdate: function() {

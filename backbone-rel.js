@@ -870,7 +870,8 @@
 
                 model.fetch({
                     success: this._relatedObjectFetchSuccessHandler.bind(this),
-                    error: this._relatedObjectFetchErrorHandler.bind(this)
+                    error: this._relatedObjectFetchErrorHandler.bind(this),
+                    isAutoFetch: true
                 });
             }
         },

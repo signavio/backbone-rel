@@ -599,7 +599,9 @@
             var id = value[RelClass.prototype.idAttribute||"id"] || value;
 
             // reset relatedObject if the ID reference changed
-            if(relatedObject && relatedObject[relatedObject.idAttribute||"id"] && relatedObject.id !== id) {
+            // if the current related object does not yet have an id and the new value is side-loaded
+            // data, do not reset, but assign the new id to the current related object
+            if(relatedObject && relatedObject.id !== id && (relatedObject[relatedObject.idAttribute||"id"] || !(value instanceof Object))) {
                 relatedObject = undefined;
             }
 

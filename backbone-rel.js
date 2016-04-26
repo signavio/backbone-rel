@@ -258,7 +258,7 @@
 
                 if(this.embeddings[attr]) {
 
-                    var opts = _.extend({}, nestedOptions, { clear: options.clear },  { unset: unset || _.contains(keysToUnset, attr) });
+                    var opts = _.extend({}, nestedOptions, { clear: options.clear },  { unset: unset || _.includes(keysToUnset, attr) });
                     this._setEmbedding(attr, val, opts, changes);
 
                 } else if(referenceKey = findReferenceKey(attr)) {
@@ -268,7 +268,7 @@
                         // is ID ref, but also side-loaded data is present in attrs
                         continue; // ignore attr
                     }
-                    var opts = _.extend({}, nestedOptions, { unset: unset || _.contains(keysToUnset, referenceKey) });
+                    var opts = _.extend({}, nestedOptions, { unset: unset || _.includes(keysToUnset, referenceKey) });
                     this._setReference(referenceKey, val, opts, changes);
 
                 } else {
@@ -280,7 +280,7 @@
                     } else {
                         delete this.changed[attr];
                     }
-                    unset || _.contains(keysToUnset, attr) ? delete current[attr] : current[attr] = val;
+                    unset || _.includes(keysToUnset, attr) ? delete current[attr] : current[attr] = val;
 
                 }
             }
@@ -309,7 +309,7 @@
             this._changing = false;
 
             // Trigger original 'deepchange' event, which will be propagated through the related object graph
-            if(!silent && changes.length && !_.contains(this._deepChangePropagatedFor, nestedOptions.setOriginId)) {
+            if(!silent && changes.length && !_.includes(this._deepChangePropagatedFor, nestedOptions.setOriginId)) {
                 this._deepChangePropagatedFor.push(nestedOptions.setOriginId);
                 this.trigger('deepchange', this, _.extend({ setOriginId: nestedOptions.setOriginId }, options));
                 this.trigger('deepchange_propagated', this, _.extend({ setOriginId: nestedOptions.setOriginId }, options));
@@ -354,7 +354,7 @@
                 }
 
                 var relatedObject = this.get(key);
-                if(relatedObject && !relatedObject.isSyncing && !_.contains(this._relatedObjectsToFetch, relatedObject)) {
+                if(relatedObject && !relatedObject.isSyncing && !_.includes(this._relatedObjectsToFetch, relatedObject)) {
                     this._relatedObjectsToFetch.push(relatedObject);
                 }
             }
@@ -643,7 +643,7 @@
 
                     // auto-fetch related model if its url can be built
                     var autoFetch = this.autoFetchRelated === true ||
-                        (_.isArray(this.autoFetchRelated) && _.contains(this.autoFetchRelated, key));
+                        (_.isArray(this.autoFetchRelated) && _.includes(this.autoFetchRelated, key));
                     var url;
                     try {
                         url = _.result(relatedObject, "url");
@@ -652,7 +652,7 @@
                             console.warn("Could not build url to auto-fetch referenced model for key '" + key +"'", e.stack);
                         }
                     }
-                    if(autoFetch && url && !relatedObject.isSynced && !relatedObject.isSyncing && !_.contains(this._relatedObjectsToFetch, relatedObject)) {
+                    if(autoFetch && url && !relatedObject.isSynced && !relatedObject.isSyncing && !_.includes(this._relatedObjectsToFetch, relatedObject)) {
                         this._relatedObjectsToFetch.push(relatedObject);
                     }
                 }
@@ -734,7 +734,7 @@
 
                         // auto-fetch related model if its url can be built
                         var autoFetch = this.autoFetchRelated === true ||
-                            (_.isArray(this.autoFetchRelated) && _.contains(this.autoFetchRelated, key));
+                            (_.isArray(this.autoFetchRelated) && _.includes(this.autoFetchRelated, key));
                         var url;
                         try {
                             url = _.result(item, "url");
@@ -743,7 +743,7 @@
                                 console.warn("Could not build url to auto-fetch referenced model for key '" + key + "'", e);
                             }
                         }
-                        if(autoFetch && url && !item.isSynced && !item.isSyncing && !_.contains(this._relatedObjectsToFetch, item)) {
+                        if(autoFetch && url && !item.isSynced && !item.isSyncing && !_.includes(this._relatedObjectsToFetch, item)) {
                             this._relatedObjectsToFetch.push(item);
                         }
                     }
@@ -804,7 +804,7 @@
             for(var i=0; i<embeddingsKeys.length; i++) {
                 var key = embeddingsKeys[i];
                 var autoFetch = this.autoFetchRelated === true ||
-                        (_.isArray(this.autoFetchRelated) && _.contains(this.autoFetchRelated, key));
+                        (_.isArray(this.autoFetchRelated) && _.includes(this.autoFetchRelated, key));
                 if(autoFetch) {
                     if(!this.get(key)) {
                         var RelClass = resolveRelClass(this.embeddings[key]);
@@ -813,7 +813,7 @@
                         continue;
                     }
                     var relatedObject = this.get(key);
-                    if(!relatedObject.isSyncing && !_.contains(this._relatedObjectsToFetch, relatedObject)) {
+                    if(!relatedObject.isSyncing && !_.includes(this._relatedObjectsToFetch, relatedObject)) {
                         this._relatedObjectsToFetch.push(relatedObject);
                     }
                 }
@@ -846,7 +846,7 @@
 
         _propagateDeepChange: function(changedModelOrCollection, opts) {
             // make sure that 'deepchange' is only triggered once, also when set operations are nested
-            if(_.contains(this._deepChangePropagatedFor, opts.setOriginId)) {
+            if(_.includes(this._deepChangePropagatedFor, opts.setOriginId)) {
                 return;
             }
             this._deepChangePropagatedFor.push(opts.setOriginId);

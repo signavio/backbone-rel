@@ -95,7 +95,7 @@
 
             // stop listening to previous props that are not present anymore
             for(key in this.props) {
-                if(_.contains(keysForBackboneProps, key)) return;
+                if(_.includes(keysForBackboneProps, key)) return;
                 prop = this.props[key];
                 if(prop instanceof Backbone.Model || prop instanceof Backbone.Collection) {
                     this.stopReacting(prop);

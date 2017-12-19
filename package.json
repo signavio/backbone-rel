@@ -21,7 +21,7 @@
     "docco": "0.6.3",
     "es5-shim": "4.0.6",
     "jquery": "2.1.4",
-    "karma": "0.12.37",
+    "karma": "0.13.22",
     "karma-coverage": "0.2.7",
     "karma-junit-reporter": "0.2.2",
     "karma-mocha": "0.1.10",

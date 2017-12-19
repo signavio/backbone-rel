@@ -33,7 +33,7 @@
     "rquery": "2.0.9",
     "sinon": "1.12.2",
     "sinon-chai": "2.6.0",
-    "uglify-js": "2.4.24"
+    "uglify-js": "2.8.29"
   },
   "scripts": {
     "test": "karma start karma.conf.js",

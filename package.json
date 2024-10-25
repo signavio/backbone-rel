@@ -20,7 +20,7 @@
     "chai-react": "3.0.1",
     "docco": "0.7.0",
     "es5-shim": "4.5.13",
-    "jquery": "3.2.1",
+    "jquery": "3.5.0",
     "karma": "0.13.22",
     "karma-coverage": "1.1.2",
     "karma-junit-reporter": "1.2.0",

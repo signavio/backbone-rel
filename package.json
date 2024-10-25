@@ -30,7 +30,7 @@
     "mocha": "5.2.0",
     "react": "0.13.3",
     "requirejs": "2.3.5",
-    "rquery": "2.0.9",
+    "rquery": "5.1.0",
     "sinon": "1.17.7",
     "sinon-chai": "2.14.0",
     "uglify-js": "3.4.4"
